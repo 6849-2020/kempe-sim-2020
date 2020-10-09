@@ -21,7 +21,7 @@ function ParticleSystem() {
 
         };
 
-        
+
         this.getState = function() {
                 return particles;
         };
@@ -29,7 +29,7 @@ function ParticleSystem() {
         this.setState = function(newState) {
                 particles = newState;
         };
-        
+
 
 }
 */
@@ -48,19 +48,19 @@ function evalForces(data) {
 
         // drag force
         f[i] = [node[3], node[4], node[2], -kdrag*node[3], -kdrag*node[4]];
-        
+
 
         // nulify force and velocity on fixed nodes
         if (node[2]) {
             f[i] = [0, 0, node[2], 0, 0];
         }
-        
+
     }
 
     //spring forces
     var kspring = 1000;
     for (var i = 0; i < edges.length; i++) {
-        var edge = edges[i]; 
+        var edge = edges[i];
         var pt1 = state[edge[0]];
         var pt2 = state[edge[1]];
         var r = edge[2]
@@ -76,8 +76,8 @@ function evalForces(data) {
         f[edge[1]][3] -= fx;
         f[edge[1]][4] -= fy;
     }
-    
-    
+
+
 
 
 
@@ -109,11 +109,11 @@ function evalForces2(data, fi, fx, fy) {
     qf[2] += p[1][3]*(-5);
     qf[3] += p[1][4]*(-5);
 
-    var j = [   p[0][0]-p[1][0], 
+    var j = [   p[0][0]-p[1][0],
                 p[0][1]-p[1][1],
                 p[1][0]-p[0][0],
                 p[1][1]-p[0][1]];
-    var jd = [  p[0][3]-p[1][3], 
+    var jd = [  p[0][3]-p[1][3],
                 p[0][4]-p[1][4],
                 p[1][3]-p[0][3],
                 p[1][4]-p[0][4]];
@@ -185,7 +185,7 @@ function evalForces3(data, fi, fx, fy) {
         qf.push(p[m[i]][3]*(-5));
         qf.push(p[m[i]][4]*(-5));
     }
-    
+
     qf[mr[fi]*2] += fx;
     qf[mr[fi]*2+1] += fy;
 
@@ -220,15 +220,15 @@ function evalForces3(data, fi, fx, fy) {
         }
     }
     //curve constraint
-    
-    
+
+
     //j.push([0,0,0,0,p[3][1],p[3][0]]);
     //jd.push([0,0,0,0,p[3][4],p[3][3]]);
-    
+
     //circle
     // j.push([0,0,0,0,2*p[3][0], 2*p[3][1]]);
     // jd.push([0,0,0,0,2*p[3][3], 2*p[3][4]]);
-    
+
 
 
 
@@ -248,7 +248,7 @@ function evalForces3(data, fi, fx, fy) {
 
 
 
-	
+
 
     var cdot = [];
     for (var i=0; i<e.length; i++)
@@ -328,7 +328,7 @@ function evalForces3(data, fi, fx, fy) {
 
 var F = function(x, y) {
 	// circle
-	//return x*x + y*y - 1;	
+	//return x*x + y*y - 1;
 
 	// ellipse
 	//return (x*x)/4 + y*y - 1;
@@ -459,7 +459,7 @@ function pgramForces(pgram, fi, fx, fy) {
         qf.push(p[m[i]][3]*(-5));
         qf.push(p[m[i]][4]*(-5));
     }
-    
+
     qf[mr[fi]*2] += fx;
     qf[mr[fi]*2+1] += fy;
 
@@ -494,11 +494,11 @@ function pgramForces(pgram, fi, fx, fy) {
         }
     }
     //curve constraint
-    
-    
+
+
     j.push([0,0,0,0,Fx(p[3][0], p[3][1]), Fy(p[3][0], p[3][1])]);
     jd.push([0,0,0,0,Fxx(p[3][0], p[3][1])*p[3][3] +Fxy(p[3][0], p[3][1])*p[3][4], Fyy(p[3][0], p[3][1])*p[3][4] + Fxy(p[3][0], p[3][1])*p[3][3]]);
-    
+
 
 
 
@@ -518,7 +518,7 @@ function pgramForces(pgram, fi, fx, fy) {
 
 
 
-	
+
 
     var cdot = [];
     for (var i=0; i<e.length; i++)
@@ -660,19 +660,19 @@ function conjugategrad(A, b)
 }
 
 function timeStep(data, forces, t) {
-   var state = data[0]; 
+   var state = data[0];
    var node;
    var nodeF;
 
    for (var i = 0; i < state.length; i++) {
        node = state[i];
        nodeF = forces[i];
-       
+
        node[0] = node[0] + t*nodeF[0];
        node[1] = node[1] + t*nodeF[1];
        node[3] = node[3] + t*nodeF[3];
        node[4] = node[4] + t*nodeF[4];
-       
+
    }
 };
 
@@ -692,7 +692,7 @@ function RK4step(data, forces, t) {
         var k1vx = t*nodeF[3];
         var k1vy = t*nodeF[4];
 
-        var k2x = 
+        var k2x =
     }
 
 }

@@ -44,6 +44,8 @@ var anglea, angleb;
 var displayhelp  = true;
 var is_chrome = navigator.userAgent.toLowerCase().indexOf('chrome') > -1;
 
+var traceFunction = [];
+
 function kempeStart(kempesim) {
     fakingit = kempesim;
     cvs = document.getElementById("graphics-canvas");
@@ -70,7 +72,7 @@ function kempeStart(kempesim) {
     cvs.addEventListener('mouseout', handleMouseOut);
     cvs.addEventListener('click', handleMouseClick);
 
-    
+
     recalcViewDimentions();
 
 
@@ -176,7 +178,7 @@ function createPhysicsWorld() {
     {
         // fixDef.shape = new b2PolygonShape;
         // fixDef.shape.SetAsEdge(new b2Vec2(0, 0),
-        //                         new b2Vec2(data[0][data[1][i][1]][0]-data[0][data[1][i][0]][0], 
+        //                         new b2Vec2(data[0][data[1][i][1]][0]-data[0][data[1][i][0]][0],
         //                                     data[0][data[1][i][1]][1]-data[0][data[1][i][0]][1]));
         // bodyDef.position.x = data[0][data[1][i][0]][0];
         // bodyDef.position.y = data[0][data[1][i][0]][1];
@@ -187,9 +189,9 @@ function createPhysicsWorld() {
         // revJointDef.Initialize(bod, bodies[data[1][i][1]], bodies[data[1][i][1]].GetWorldCenter());
         // j = world.CreateJoint(revJointDef);
 
-        distJointDef.Initialize(bodies[data[1][i][0]], 
-            bodies[data[1][i][1]], 
-            bodies[data[1][i][0]].GetWorldCenter(), 
+        distJointDef.Initialize(bodies[data[1][i][0]],
+            bodies[data[1][i][1]],
+            bodies[data[1][i][0]].GetWorldCenter(),
             bodies[data[1][i][1]].GetWorldCenter());
         j = world.CreateJoint(distJointDef);
 
@@ -331,11 +333,11 @@ function removePoint(p) {
         renameLines(data[0].length-1, p);
         data[0].splice(data[0].length-1,1);
     }
-    
+
 }
 
 function init() {
-    data = 
+    data =
     [
         [
             [0  ,   0   ,   true],
@@ -352,7 +354,7 @@ function init() {
             [2, 3,  1]
         ]
     ];
-    var data1 = 
+    var data1 =
     [
         [
             [0  ,   0   ,   true],
@@ -363,7 +365,7 @@ function init() {
         ]
     ];
 
-    var data2 = 
+    var data2 =
     [
         [
             [0  ,   0   ,   true],
@@ -379,7 +381,7 @@ function init() {
         ]
     ];
 
-    var data3 = 
+    var data3 =
     [
         [
             [0, 0, true],
@@ -467,7 +469,7 @@ function draw() {
         ctx.strokeStyle = '#8888ff';
     }
 
-    
+
     for (var i=0; i<dd[1].length; i++)
     {
         ctx.lineWidth = LINE_BORDER_WIDTH;
@@ -537,14 +539,14 @@ function draw() {
                     if (cccc == undefined)
                         ctx.fillStyle = '#8888ff';//'blue';
                     else ctx.fillStyle = cccc;
+                } else {
+                  ctx.fillStyle = 'green';
                 }
-                else
-                    ctx.fillStyle = 'green';
         ctx.lineWidth = 1;
         ctx.strokeStyle = 'black';
         ctx.beginPath();
-        ctx.arc((cx+sx*dd[0][i][0]), 
-                (cy+sy*dd[0][i][1]), 
+        ctx.arc((cx+sx*dd[0][i][0]),
+                (cy+sy*dd[0][i][1]),
                 RADIUS/2, 0, Math.PI*2, true);
         ctx.closePath();
         ctx.fill();
@@ -562,8 +564,8 @@ function draw() {
                 ctx.lineWidth = 1;
                 ctx.strokeStyle = 'black';
                 ctx.beginPath();
-                ctx.arc((cx+sx*dd[0][drawdata[2][i]][0]), 
-                        (cy+sy*dd[0][drawdata[2][i]][1]), 
+                ctx.arc((cx+sx*dd[0][drawdata[2][i]][0]),
+                        (cy+sy*dd[0][drawdata[2][i]][1]),
                         RADIUS/2, 0, Math.PI*2, true);
                 ctx.closePath();
                 ctx.fill();
@@ -574,8 +576,8 @@ function draw() {
         ctx.lineWidth = 1;
         ctx.strokeStyle = 'black';
         ctx.beginPath();
-        ctx.arc((cx+sx*dd[0][dd[0].length-2][0]), 
-                (cy+sy*dd[0][dd[0].length-2][1]), 
+        ctx.arc((cx+sx*dd[0][dd[0].length-2][0]),
+                (cy+sy*dd[0][dd[0].length-2][1]),
                 RADIUS/2, 0, Math.PI*2, true);
         ctx.closePath();
         ctx.fill();
@@ -602,12 +604,16 @@ function draw() {
         for (var i=0; i<data[0].length; i++)
         {
 
-            if (selected == i+1 || hilight == i+1 || line_start == i+1)
-                if (data[0][i][2])
+            if (selected == i+1 || hilight == i+1 || line_start == i+1) {
+                if (data[0][i][2]) {
                     ctx.fillStyle = '#FF8888'
-                else
+                } else {
                     ctx.fillStyle = '#88FF88';
-            else
+                }
+
+                traceFunction.push([(cx+sx*data[0][i][0]),
+                                    (cy+sy*data[0][i][1])]);
+             } else {
                 if (data[0][i][2])
                     ctx.fillStyle = 'red'
                 else
@@ -618,15 +624,17 @@ function draw() {
                         ctx.fillStyle = Colors.rgb2hex(43, 145, 250);
                     else if (i==2)
                         ctx.fillStyle = Colors.rgb2hex(250, 145, 43);
-                    else
+                    else {
                         ctx.fillStyle = 'green';
+                    }
                 }
-                    
+              }
+
             ctx.lineWidth = 1;
             ctx.strokeStyle = 'black';
             ctx.beginPath();
-            ctx.arc((cx+sx*data[0][i][0]), 
-                    (cy+sy*data[0][i][1]), 
+            ctx.arc((cx+sx*data[0][i][0]),
+                    (cy+sy*data[0][i][1]),
                     RADIUS/2, 0, Math.PI*2, true);
             ctx.closePath();
             ctx.fill();
@@ -649,7 +657,7 @@ function draw() {
                         "  Drag screen to move view\n" +
                         "  Scrollwheel to zoom in/out\n" +
                         "  H - toggle this help text"
-        var extra_helptext = "\n\n" + 
+        var extra_helptext = "\n\n" +
                         "Edit Mode Controls:\n" +
                         "  Ctrl + click - add free point\n" +
                         "  Ctrl+Shift + click - add fixed point\n" +
@@ -661,7 +669,7 @@ function draw() {
         var kempe_helptext = "\n"+
                         "  R - Switch linkage construction algorithm.\n" +
                         "      Optimized linkage has less nodes for faster render,\n"+
-                        "      but might not result in a proper linkage.\n\n" + 
+                        "      but might not result in a proper linkage.\n\n" +
                         "Tips:\n" +
                         "  Pick functions which can be visualized within\n" +
                         "    the disc of radius 2 centered on the origin\n" +
@@ -691,14 +699,32 @@ function draw() {
     // ctx.lineWidth = 1;
     // ctx.strokeStyle = 'black';
     // ctx.beginPath();
-    // ctx.arc((cx+sx*data[0][3][0]), 
-    //         (cy+sy*data[0][3][1]), 
+    // ctx.arc((cx+sx*data[0][3][0]),
+    //         (cy+sy*data[0][3][1]),
     //         RADIUS/2, 0, Math.PI*2, true);
     // ctx.closePath();
     // ctx.fill();
     // ctx.stroke();
 
-    
+    if (traceFunction.length > 200) {
+      traceFunction.shift();
+    }
+
+
+    if (traceFunction.length) {
+      ctx.lineWidth = 2;
+      ctx.strokeStyle = 'red';
+      ctx.beginPath();
+      ctx.moveTo(traceFunction[0][0], traceFunction[0][1]);
+      for (var i = 1; i < traceFunction.length; i++) {
+        ctx.lineTo(traceFunction[i][0], traceFunction[i][1])
+      }
+      ctx.stroke();
+    }
+
+
+
+
 }
 
 function toggleEditMode() {
@@ -759,11 +785,11 @@ function update() {
         //         {
         //         }
         //     }
-            
+
         // }
         // var forces = evalForces(data);
         // timeStep(data, forces, 0.1);
-        
+
         if (fakingit)
         {
             if (selected)
@@ -793,6 +819,32 @@ function update() {
                 drawdata = createOptimizedKempeLinkage(data[0][1], data[0][2],terms, fakecolor, anglea, angleb);
             else
                 drawdata = createKempeLinkage(normalize(data[0][1]),normalize(data[0][2]),terms, anglea, angleb);
+
+
+            // add to trace function
+            for (var i=0; i<data[0].length; i++)
+            {
+                if (selected == i+1 || hilight == i+1 || line_start == i+1) {
+                  // traceFunction.push([(cx+sx*data[0][i][0]),
+                  //                     (cy+sy*data[0][i][1])]);
+                } else {
+                  if (data[0][i][2]) {
+
+                  } else {
+                      if (i==0) {
+
+                      } else if (i==1) {
+
+                      } else if (i==2) {
+
+                      } else {
+
+                        break;
+                      }
+                  }
+                }
+              }
+
 
         } else
         {
@@ -858,7 +910,7 @@ function handleMouseClick(e) {
                 }
             }
         }
-    } else 
+    } else
     {
 
     }
@@ -1205,7 +1257,7 @@ function handleMouseUp(e) {
             if (mousejoint !== null)
             {
                 world.DestroyJoint(mousejoint);
-                mouseJoint = null; 
+                mouseJoint = null;
             }
         }
     }
@@ -1287,12 +1339,12 @@ function handleKeyPress(event) {
     }
     // shift
     else if (event.keyCode == 16) {
-        
+
     }
 
     // ctrl
     else if (event.keyCode == 17) {
-        
+
     }
 
     // capslock
@@ -1487,13 +1539,13 @@ function initlinkage() {
 // in case there's no console
 fakeconsole = {};
 fakeconsole.emptyConsole = {
-    assert : function(){},  
-    log : function(){},  
-    warn : function(){},  
-    error : function(){},  
-    debug : function(){},  
-    dir : function(){},  
-    info : function(){}  
+    assert : function(){},
+    log : function(){},
+    warn : function(){},
+    error : function(){},
+    debug : function(){},
+    dir : function(){},
+    info : function(){}
 };
 
 if (console && console.log);
