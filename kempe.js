@@ -1508,6 +1508,7 @@ function updateLinkage() {
     physicsInit(equs);
     toggleEditMode();
     toggleEditMode();
+    traceHistory = [];
 }
 
 function initlinkage() {
