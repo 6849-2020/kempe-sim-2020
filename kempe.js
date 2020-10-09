@@ -44,7 +44,23 @@ var anglea, angleb;
 var displayhelp  = true;
 var is_chrome = navigator.userAgent.toLowerCase().indexOf('chrome') > -1;
 
-var traceFunction = [];
+var traceHistory = [];
+
+function pushToTrace(x, y) {
+  if (traceHistory.length == 0) {
+    traceHistory.push([x, y]);
+  } else {
+    // only add point if it's far enough than previous point
+    var lastPoint = traceHistory[traceHistory.length - 1]
+    var dist = Math.sqrt((lastPoint[0] - x) ** 2 + (lastPoint[1] - y) ** 2);
+    if (dist > 0.01) {
+      traceHistory.push([x, y]);
+    }
+  }
+  if (traceHistory.length > 1000) {
+    traceHistory.shift();
+  }
+}
 
 function kempeStart(kempesim) {
     fakingit = kempesim;
@@ -463,19 +479,14 @@ function draw() {
 
     // i moved this before because i don't think we want to trace over the linkage
     // is there a way to make the trace not do that original jump at the very start
-    if (traceFunction.length > 200) {
-      traceFunction.shift();
-    }
-
-
-    if (traceFunction.length) {
-      ctx.lineWidth = 2;
+    if (traceHistory.length) {
+      ctx.lineWidth = 3;
       ctx.strokeStyle = 'red';
       ctx.beginPath();
       // relative positions because trace should move when we move the linkage
-      ctx.moveTo(cx + sx*traceFunction[0][0], cy + sy*traceFunction[0][1]);
-      for (var i = 1; i < traceFunction.length; i++) {
-        ctx.lineTo(cx + sx*traceFunction[i][0], cy + sy*traceFunction[i][1])
+      ctx.moveTo(cx + sx*traceHistory[0][0], cy + sy*traceHistory[0][1]);
+      for (var i = 1; i < traceHistory.length; i++) {
+        ctx.lineTo(cx + sx*traceHistory[i][0], cy + sy*traceHistory[i][1])
       }
       ctx.stroke();
     }
@@ -655,7 +666,7 @@ function draw() {
             }
 
             if (i == 3) { // there's no comments on the original code but i think i==3 means that its the drawing vertex
-              traceFunction.push([data[0][i][0], data[0][i][1]]);
+              pushToTrace(data[0][i][0], data[0][i][1]);
             }
 
             ctx.lineWidth = 1;
