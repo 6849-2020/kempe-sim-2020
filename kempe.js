@@ -461,6 +461,25 @@ function draw() {
     ctx.fillStyle = 'white'
     ctx.fillRect(0, 0, VIEW_WIDTH, VIEW_HEIGHT);
 
+    // i moved this before because i don't think we want to trace over the linkage
+    // is there a way to make the trace not do that original jump at the very start
+    if (traceFunction.length > 200) {
+      traceFunction.shift();
+    }
+
+
+    if (traceFunction.length) {
+      ctx.lineWidth = 2;
+      ctx.strokeStyle = 'red';
+      ctx.beginPath();
+      // relative positions because trace should move when we move the linkage
+      ctx.moveTo(cx + sx*traceFunction[0][0], cy + sy*traceFunction[0][1]);
+      for (var i = 1; i < traceFunction.length; i++) {
+        ctx.lineTo(cx + sx*traceFunction[i][0], cy + sy*traceFunction[i][1])
+      }
+      ctx.stroke();
+    }
+
     ctx.fillStyle = 'blue';
     ctx.strokeStyle = 'blue';
     if (fakingit)
@@ -604,16 +623,21 @@ function draw() {
         for (var i=0; i<data[0].length; i++)
         {
 
-            if (selected == i+1 || hilight == i+1 || line_start == i+1) {
-                if (data[0][i][2]) {
+            if (selected == i+1 || hilight == i+1 || line_start == i+1)
+            {
+                if (data[0][i][2])
+                {
                     ctx.fillStyle = '#FF8888'
-                } else {
+                }
+                else
+                {
                     ctx.fillStyle = '#88FF88';
                 }
 
-                traceFunction.push([(cx+sx*data[0][i][0]),
-                                    (cy+sy*data[0][i][1])]);
-             } else {
+
+             }
+             else
+             {
                 if (data[0][i][2])
                     ctx.fillStyle = 'red'
                 else
@@ -628,7 +652,11 @@ function draw() {
                         ctx.fillStyle = 'green';
                     }
                 }
-              }
+            }
+
+            if (i == 3) { // there's no comments on the original code but i think i==3 means that its the drawing vertex
+              traceFunction.push([data[0][i][0], data[0][i][1]]);
+            }
 
             ctx.lineWidth = 1;
             ctx.strokeStyle = 'black';
@@ -706,21 +734,7 @@ function draw() {
     // ctx.fill();
     // ctx.stroke();
 
-    if (traceFunction.length > 200) {
-      traceFunction.shift();
-    }
 
-
-    if (traceFunction.length) {
-      ctx.lineWidth = 2;
-      ctx.strokeStyle = 'red';
-      ctx.beginPath();
-      ctx.moveTo(traceFunction[0][0], traceFunction[0][1]);
-      for (var i = 1; i < traceFunction.length; i++) {
-        ctx.lineTo(traceFunction[i][0], traceFunction[i][1])
-      }
-      ctx.stroke();
-    }
 
 
 
@@ -819,31 +833,6 @@ function update() {
                 drawdata = createOptimizedKempeLinkage(data[0][1], data[0][2],terms, fakecolor, anglea, angleb);
             else
                 drawdata = createKempeLinkage(normalize(data[0][1]),normalize(data[0][2]),terms, anglea, angleb);
-
-
-            // add to trace function
-            for (var i=0; i<data[0].length; i++)
-            {
-                if (selected == i+1 || hilight == i+1 || line_start == i+1) {
-                  // traceFunction.push([(cx+sx*data[0][i][0]),
-                  //                     (cy+sy*data[0][i][1])]);
-                } else {
-                  if (data[0][i][2]) {
-
-                  } else {
-                      if (i==0) {
-
-                      } else if (i==1) {
-
-                      } else if (i==2) {
-
-                      } else {
-
-                        break;
-                      }
-                  }
-                }
-              }
 
 
         } else
