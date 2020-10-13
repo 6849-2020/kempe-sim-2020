@@ -44,9 +44,12 @@ var anglea, angleb;
 var displayhelp  = true;
 var is_chrome = navigator.userAgent.toLowerCase().indexOf('chrome') > -1;
 
+var drawTrace = false;
 var traceHistory = [];
 
 function pushToTrace(x, y) {
+  if (!drawTrace)
+    return;
   if (traceHistory.length == 0) {
     traceHistory.push([x, y]);
   } else {
@@ -1036,6 +1039,7 @@ function handleMouseWheel(e) {
 }
 
 function handleMouseDown(e) {
+  drawTrace = true;
     if (edit_mode)
     {
         // ctrl
