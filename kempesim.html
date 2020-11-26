@@ -20,13 +20,18 @@
                 <input type="submit" id="button" onclick="updateLinkage();" />
             </td>
             <td>
-                
+
             </td>
         </tr>
 
         <tr>
             <td>
                 <canvas id="graphics-canvas" style="border: none;" width="500" height="500" />
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <input type="checkbox" id="checkboxphysics" onchange="updatePhysicsMode();" />Use Box2D Physics
             </td>
         </tr>
         <!-- <tr>
@@ -41,14 +46,13 @@
                 </p>
             </td>
             <td>
-                
+
             </td>
         </tr> -->
     </table>
-    
+
 A Kempe linkage simulation - based on Abbot's <a href="http://dspace.mit.edu/handle/1721.1/44375">Generalizations of Kempe's universality theorem</a>
 </body>
 
 
 </html>
-

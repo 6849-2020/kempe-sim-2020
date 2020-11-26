@@ -14,29 +14,25 @@ var map = {};
 var view = {};
 var VIEW_WIDTH = 500;
 var VIEW_HEIGHT = 500;
-var VIEW_TILE_WIDTH = VIEW_WIDTH/TILE_WIDTH;
-var VIEW_TILE_HEIGHT = VIEW_HEIGHT/TILE_WIDTH;
-var VIEW_TILE_WIDTH_HALF = (VIEW_TILE_WIDTH/2)>>0;
-var VIEW_TILE_HEIGHT_HALF = (VIEW_TILE_HEIGHT/2)>>0;
 var data;
 var drawdata;
 var selected;
-var hilight;
+var highlight;
 var dragging;
 var line_start, line_end;
 var edit_mode;
 var lastpos;
-var RADIUS = 10;
+var RADIUS = 16;
 var cx, cy, sx, sy;
 var cmx, cmy;
 var lines = {};
 var equs;
 var world;
 var bodies;
-var mousejoint;
+var mousejoint = null;
 var BOX2DPHYSICS = false;
 var USEPHYSICS = true;
-var fakingit;
+var equationCurve;
 var accuraterender = true;
 var fakecolor = {};
 var terms;
@@ -47,33 +43,14 @@ var is_chrome = navigator.userAgent.toLowerCase().indexOf('chrome') > -1;
 var drawTrace = false;
 var traceHistory = [];
 
-function pushToTrace(x, y) {
-  if (!drawTrace)
-    return;
-  if (traceHistory.length == 0) {
-    traceHistory.push([x, y]);
-  } else {
-    // only add point if it's far enough than previous point
-    var lastPoint = traceHistory[traceHistory.length - 1]
-    var dist = Math.sqrt((lastPoint[0] - x) ** 2 + (lastPoint[1] - y) ** 2);
-    if (dist > 0.01) {
-      traceHistory.push([x, y]);
-    }
-  }
-  if (traceHistory.length > 1000) {
-    traceHistory.shift();
-  }
-}
 
-function kempeStart(kempesim) {
-    fakingit = kempesim;
+function kempeStart(globals) {
+    equationCurve = false;
+    BOX2DPHYSICS = (globals.physicsEngine == "box2d");
     cvs = document.getElementById("graphics-canvas");
-    errordisplay = document.getElementById("error-display");
-    checkboxeditMode = document.getElementById("checkboxeditMode");
-    checkboxphysicsMode = document.getElementById("checkboxphysics");
     ctx = cvs.getContext("2d");
     ctx.fillStyle = "#FFFFFF";
-    ctx.fillRect(0,0,500,500);
+    //ctx.fillRect(0,0,500,500);
     ctx.fillStyle = "#000000";
     pos = [0,0];
     corners = [ [0,0],
@@ -91,19 +68,16 @@ function kempeStart(kempesim) {
     cvs.addEventListener('mouseout', handleMouseOut);
     cvs.addEventListener('click', handleMouseClick);
 
-
     recalcViewDimentions();
-
-
 
     cvs.onselectstart = function () { return false; } // ie
     cvs.onmousedown = function () { return false; } // mozilla
 
     ctx.fillStyle = 'red';
 
-    init();
+    initKempe(globals);
 
-    if (fakingit)
+    if (equationCurve)
         initlinkage();
     tick();
 }
@@ -114,17 +88,38 @@ function recalcViewDimentions()
 {
     var widthminus = -19
     var heightminus = -80;
-    if (fakingit)
+    if (equationCurve)
     {
         widthminus = -19;
         heightminus = -90;
     }
+    widthminus = 0;
+    heightminus = 0;
     cvs.width = window.innerWidth+widthminus;
     cvs.height = window.innerHeight+heightminus;
-    VIEW_WIDTH = cvs.width+widthminus;
+    VIEW_WIDTH = cvs.width;+widthminus;
     VIEW_HEIGHT = cvs.height+heightminus;
     last_doc_width = window.innerWidth+widthminus;
     last_doc_length = window.innerHeight+heightminus;
+}
+
+
+function pushToTrace(x, y) {
+  if (!drawTrace)
+    return;
+  if (traceHistory.length == 0) {
+    traceHistory.push([x, y]);
+  } else {
+    // only add point if it's far enough than previous point
+    var lastPoint = traceHistory[traceHistory.length - 1]
+    var dist = Math.sqrt((lastPoint[0] - x) ** 2 + (lastPoint[1] - y) ** 2);
+    if (dist > 0.01) {
+      traceHistory.push([x, y]);
+    }
+  }
+  if (traceHistory.length > 1000) {
+    traceHistory.shift();
+  }
 }
 
 function createPhysicsWorld() {
@@ -165,15 +160,15 @@ function createPhysicsWorld() {
     var bodyDef = new b2BodyDef;
 
     // for (var i=data.length-1; i>=0; i--)
-    for (var i=0; i<data[0].length; i++)
+    for (var i=0; i<data.points.length; i++)
     {
 
-        if (data[0][i][2])
+        if (data.points[i][2])
             bodyDef.type = b2Body.b2_staticBody;
         else
             bodyDef.type = b2Body.b2_dynamicBody;
-        bodyDef.position.x = data[0][i][0];
-        bodyDef.position.y = data[0][i][1];
+        bodyDef.position.x = data.points[i][0];
+        bodyDef.position.y = data.points[i][1];
         var bod = world.CreateBody(bodyDef);
         bod.CreateFixture(fixDef);
 
@@ -193,25 +188,25 @@ function createPhysicsWorld() {
     bodyDef.type = b2Body.b2_dynamicBody;
     var j;
 
-    for (var i=0; i<data[1].length; i++)
+    for (var i=0; i<data.edges.length; i++)
     {
         // fixDef.shape = new b2PolygonShape;
         // fixDef.shape.SetAsEdge(new b2Vec2(0, 0),
-        //                         new b2Vec2(data[0][data[1][i][1]][0]-data[0][data[1][i][0]][0],
-        //                                     data[0][data[1][i][1]][1]-data[0][data[1][i][0]][1]));
-        // bodyDef.position.x = data[0][data[1][i][0]][0];
-        // bodyDef.position.y = data[0][data[1][i][0]][1];
+        //                         new b2Vec2(data.points[data.edges[i][1]][0]-data.points[data.edges[i][0]][0],
+        //                                     data.points[data.edges[i][1]][1]-data.points[data.edges[i][0]][1]));
+        // bodyDef.position.x = data.points[data.edges[i][0]][0];
+        // bodyDef.position.y = data.points[data.edges[i][0]][1];
         // var bod = world.CreateBody(bodyDef);
         // bod.CreateFixture(fixDef);
-        // revJointDef.Initialize(bod, bodies[data[1][i][0]], bodies[data[1][i][0]].GetWorldCenter());
+        // revJointDef.Initialize(bod, bodies[data.edges[i][0]], bodies[data.edges[i][0]].GetWorldCenter());
         // j = world.CreateJoint(revJointDef);
-        // revJointDef.Initialize(bod, bodies[data[1][i][1]], bodies[data[1][i][1]].GetWorldCenter());
+        // revJointDef.Initialize(bod, bodies[data.edges[i][1]], bodies[data.edges[i][1]].GetWorldCenter());
         // j = world.CreateJoint(revJointDef);
 
-        distJointDef.Initialize(bodies[data[1][i][0]],
-            bodies[data[1][i][1]],
-            bodies[data[1][i][0]].GetWorldCenter(),
-            bodies[data[1][i][1]].GetWorldCenter());
+        distJointDef.Initialize(bodies[data.edges[i][0]],
+            bodies[data.edges[i][1]],
+            bodies[data.edges[i][0]].GetWorldCenter(),
+            bodies[data.edges[i][1]].GetWorldCenter());
         j = world.CreateJoint(distJointDef);
 
     }
@@ -220,43 +215,43 @@ function createPhysicsWorld() {
 function initProcessLinesAndPoints() {
     lines = {};
     // console.log(data);
-    for (var i=0; i<data[1].length; i++)
+    for (var i=0; i<data.edges.length; i++)
     {
-        if (data[1][i][0] == data[1][i][1])
+        if (data.edges[i][0] == data.edges[i][1])
             continue;
 
-        if (data[0][data[1][i][0]][2] && data[0][data[1][i][1]][2]) continue;
+        if (data.points[data.edges[i][0]][2] && data.points[data.edges[i][1]][2]) continue;
 
-        if (data[1][i][0] < data[1][i][1])
-            lines[data[1][i][0]+" "+data[1][i][1]] = true;
+        if (data.edges[i][0] < data.edges[i][1])
+            lines[data.edges[i][0]+" "+data.edges[i][1]] = true;
         else
-            lines[data[1][i][1]+" "+data[1][i][0]] = true;
+            lines[data.edges[i][1]+" "+data.edges[i][0]] = true;
 
     }
 
-    data[1] = [];
+    data.edges = [];
     for (var k in lines)
     {
         var s = k.split(" ");
         var p1 = parseInt(s[0]);
         var p2 = parseInt(s[1]);
-        if (data[0][p1][2] && data[0][p2][2]) continue;
-        var x = data[0][p1][0]-data[0][p2][0];
-        var y = data[0][p1][1]-data[0][p2][1];
-        data[1].push([p1, p2, Math.sqrt(x*x+y*y)]);
+        if (data.points[p1][2] && data.points[p2][2]) continue;
+        var x = data.points[p1][0]-data.points[p2][0];
+        var y = data.points[p1][1]-data.points[p2][1];
+        data.edges.push([p1, p2, Math.sqrt(x*x+y*y)]);
     }
 
-    for (var i=0; i<data[1].length; i++)
+    for (var i=0; i<data.edges.length; i++)
     {
-        lines[data[1][i][0]+" "+data[1][i][1]] = i;
+        lines[data.edges[i][0]+" "+data.edges[i][1]] = i;
     }
 
-    for (var i=0; i<data[0].length; i++)
+    for (var i=0; i<data.points.length; i++)
     {
-        for (var j=data[0][i].length; j<5; j++)
-            data[0][i].push(0);
-        if (data[0][i][2] === 0)
-            data[0][i][2] = false;
+        for (var j=data.points[i].length; j<5; j++)
+            data.points[i].push(0);
+        if (data.points[i][2] === 0)
+            data.points[i][2] = false;
     }
 
     if (BOX2DPHYSICS)
@@ -274,10 +269,10 @@ function addLine(l) {
     if (hasLine(l))
         return;
     if (l[0] < l[1])
-        lines[l[0]+" "+l[1]] = data[1].length;
+        lines[l[0]+" "+l[1]] = data.edges.length;
     else
-        lines[l[1]+" "+l[0]] = data[1].length;
-    data[1].push([l[0],l[1]]);
+        lines[l[1]+" "+l[0]] = data.edges.length;
+    data.edges.push([l[0],l[1]]);
 }
 
 function removeLine(l) {
@@ -296,46 +291,46 @@ function removeLine(l) {
         delete lines[l[1]+" "+l[0]];
     }
 
-    if (index == data[1].length-1)
-        data[1].splice(data[1].length-1,1);
+    if (index == data.edges.length-1)
+        data.edges.splice(data.edges.length-1,1);
     else
     {
-        var old = data[1][data[1].length-1];
-        data[1][index] = old;
+        var old = data.edges[data.edges.length-1];
+        data.edges[index] = old;
         lines[old[0]+" "+old[1]] = index;
-        data[1].splice(data[1].length-1,1);
+        data.edges.splice(data.edges.length-1,1);
     }
 }
 
 function renameLines(a, b) {
-    for (var x=0; x<data[1].length; x++)
+    for (var x=0; x<data.edges.length; x++)
     {
-        if (data[1][x][0] == a || data[1][x][1] == a)
+        if (data.edges[x][0] == a || data.edges[x][1] == a)
         {
-            if (data[1][x][0] > data[1][x][1])
+            if (data.edges[x][0] > data.edges[x][1])
             {
-                var temp = data[1][x][0];
-                data[1][x][0] = data[1][x][1];
-                data[1][x][1] = temp;
+                var temp = data.edges[x][0];
+                data.edges[x][0] = data.edges[x][1];
+                data.edges[x][1] = temp;
             }
-            lines[data[1][x][0]+" "+data[1][x][1]] = false;
-            delete lines[data[1][x][0]+" "+data[1][x][1]]
-            if (data[1][x][0] == a) data[1][x][0] = b;
-            else data[1][x][1] = b;
-            if (data[1][x][0] > data[1][x][1])
+            lines[data.edges[x][0]+" "+data.edges[x][1]] = false;
+            delete lines[data.edges[x][0]+" "+data.edges[x][1]]
+            if (data.edges[x][0] == a) data.edges[x][0] = b;
+            else data.edges[x][1] = b;
+            if (data.edges[x][0] > data.edges[x][1])
             {
-                var temp = data[1][x][0];
-                data[1][x][0] = data[1][x][1];
-                data[1][x][1] = temp;
+                var temp = data.edges[x][0];
+                data.edges[x][0] = data.edges[x][1];
+                data.edges[x][1] = temp;
             }
-            lines[data[1][x][0]+" "+data[1][x][1]] = x;
+            lines[data.edges[x][0]+" "+data.edges[x][1]] = x;
         }
     }
 }
 
 function removePoint(p) {
     var l;
-    for (var x=0; x<data[0].length; x++)
+    for (var x=0; x<data.points.length; x++)
     {
         if (x < p)
             removeLine([x,p]);
@@ -343,87 +338,77 @@ function removePoint(p) {
             removeLine([p,x]);
     }
 
-    if (p == data[0].length-1)
-        data[0].splice(data[0].length-1, 1);
+    if (p == data.points.length-1)
+        data.points.splice(data.points.length-1, 1);
     else
     {
-        var old = data[0][data[0].length-1];
-        data[0][p] = old;
-        renameLines(data[0].length-1, p);
-        data[0].splice(data[0].length-1,1);
+        var old = data.points[data.points.length-1];
+        data.points[p] = old;
+        renameLines(data.points.length-1, p);
+        data.points.splice(data.points.length-1,1);
     }
 
 }
 
-function init() {
-    data =
-    [
-        [
-            [0  ,   0   ,   true],
-            [0  ,   100 ,   false],
-            [100,   0   ,   false],
-            [100,   100 ,   false]
-        ],
-        [
-            [0, 1,  1],
-            [0, 2,  1],
-            [0, 3,  Math.sqrt(2)],
-            [1, 2,  Math.sqrt(2)],
-            [1, 3,  1],
-            [2, 3,  1]
-        ]
-    ];
+function initKempe(globals) {
     var data1 =
-    [
+    {
+      points:
         [
-            [0  ,   0   ,   true],
-            [0  ,   1 ,   false]
+            [0  ,   0 ,   true,   false],
+            [0  ,   1 ,   false,  false],
+            [1  ,   1 ,   false,  true]
         ],
+      edges:
         [
             [0, 1,  1],
+            [1, 2,  1],
         ]
-    ];
+    };
 
     var data2 =
-    [
+    {
+      points:
         [
             [0  ,   0   ,   true],
             [0  ,   1 ,   false],
             [1,   0   ,   false],
             [1,   1 ,   false]
         ],
+      edges:
         [
             [0, 1,  1],
             [0, 2,  1],
             [2, 3,  1],
             [1, 3,  1],
         ]
-    ];
+    };
 
     var data3 =
-    [
+    {
+      points:
         [
             [0, 0, true],
             [1, 0, false],
             [0, 1, false],
             [1, 1, false]
         ],
+      edges:
         [
             [0, 1],
             [0, 2],
             [1, 3],
             [2, 3]
         ],
-
-    ];
+    };
 
     data = data1;
 
 
     selected = false;
     dragging = false;
-    hilight = false;
-    edit_mode = false;
+    highlight = false;
+    edit_mode = (globals.controlMode == "edit");
     sx = 150;
     sy = -150;
     cx = VIEW_WIDTH/2;
@@ -432,45 +417,58 @@ function init() {
     line_start = false;
     line_end = [0,0];
 
-    // data = createAdditor(1, 2, 2, 1);
-    // parent = createParent(1,1,1);
-    //document.write(JSON.stringify(parent));
-    // terms = [
-    //             [5.3,5,0,Math.PI/2]
-    //             ,   [5.3,3,3,Math.PI/2]
-    //             ,   [5.3,4,4,Math.PI/2]
-    //                , [6,0,-2,Math.PI/2]
-    //             // , [5,1,0,0]
-    //             // , [5,0,0,Math.PI/1.2]
-    //         ];
-    // mul = createKempeLinkage(1,1,terms);
-    // data = data1;
-
-    // var d = createOptimizedKempeLinkage([4,8],[8,4],terms, fakecolor);
-    // data = d;
-
-    // data = createPLinkage(0,0,10);
-
-    // data = data3;
-    // data[0].push([0,0]);
-    // data[0].push([8,4]);
-    // data[0].push([4,8]);
-    // data[0].push([12,12]);
-    // data[1].push([0, data[0].length-3]);
-    // data = data2;
-    if (fakingit)
+    if (equationCurve)
         data = data2;
     else
         data = data1;
 
+    globals.data = data;
+
     initProcessLinesAndPoints();
 }
 
+function setFoldData(globals, fold) {
+  data = {
+    points : [],
+    edges : []
+  }
 
-var LINE_BORDER_WIDTH = 4;
-var LINE_WIDTH = 3;
+  for (var i = 0; i < fold.vertices_coords.length; i++) {
+    if (fold["vertices_kempe:assignment"][i] == "X") {
+      data.points.push([fold.vertices_coords[i][0], fold.vertices_coords[i][1], true, false]);
+    } else if (fold["vertices_kempe:assignment"][i] == "X") {
+      data.points.push([fold.vertices_coords[i][0], fold.vertices_coords[i][1], false, true]);
+    } else {
+      data.points.push([fold.vertices_coords[i][0], fold.vertices_coords[i][1], false, false]);
+    }
+  }
+
+  for (var i = 0; i < fold.edges_vertices.length; i++) {
+    data.edges.push([fold.edges_vertices[i][0], fold.edges_vertices[i][1], fold.edges_length[i]]);
+  }
+
+  selected = false;
+  dragging = false;
+  highlight = false;
+  edit_mode = (globals.controlMode == "edit");
+  sx = 150; // TODO: find proper scale
+  sy = -150; // TODO: find proper scale
+  cx = VIEW_WIDTH/2; // TODO: find proper center
+  cy = VIEW_HEIGHT/2; // TODO: find proper center
+  lastpos = [0,0];
+  line_start = false;
+  line_end = [0,0];
+
+  globals.data = data;
+
+  initProcessLinesAndPoints();
+}
+
+
+var LINE_BORDER_WIDTH = 8;
+var LINE_WIDTH = 6;
 function draw() {
-    if (fakingit)
+    if (equationCurve)
         dd = drawdata;
     else
         dd = data;
@@ -496,30 +494,30 @@ function draw() {
 
     ctx.fillStyle = 'blue';
     ctx.strokeStyle = 'blue';
-    if (fakingit)
+    if (equationCurve)
     {
         ctx.fillStyle = '#8888ff';
         ctx.strokeStyle = '#8888ff';
     }
 
 
-    for (var i=0; i<dd[1].length; i++)
+    for (var i=0; i<dd.edges.length; i++)
     {
         ctx.lineWidth = LINE_BORDER_WIDTH;
         ctx.strokeStyle = 'black';
         ctx.beginPath();
-        ctx.moveTo(cx+sx*dd[0][dd[1][i][0]][0],cy+sy*dd[0][dd[1][i][0]][1]);
-        ctx.lineTo(cx+sx*dd[0][dd[1][i][1]][0],cy+sy*dd[0][dd[1][i][1]][1]);
+        ctx.moveTo(cx+sx*dd.points[dd.edges[i][0]][0],cy+sy*dd.points[dd.edges[i][0]][1]);
+        ctx.lineTo(cx+sx*dd.points[dd.edges[i][1]][0],cy+sy*dd.points[dd.edges[i][1]][1]);
         ctx.closePath();
         ctx.stroke();
         ctx.lineWidth = LINE_WIDTH;
-        if (fakingit)
+        if (equationCurve)
             ctx.strokeStyle = '#8888ff';
         else
-            ctx.strokeStyle = 'blue';
+            ctx.strokeStyle = '#ec008b';
         ctx.beginPath();
-        ctx.moveTo(cx+sx*dd[0][dd[1][i][0]][0],cy+sy*dd[0][dd[1][i][0]][1]);
-        ctx.lineTo(cx+sx*dd[0][dd[1][i][1]][0],cy+sy*dd[0][dd[1][i][1]][1]);
+        ctx.moveTo(cx+sx*dd.points[dd.edges[i][0]][0],cy+sy*dd.points[dd.edges[i][0]][1]);
+        ctx.lineTo(cx+sx*dd.points[dd.edges[i][1]][0],cy+sy*dd.points[dd.edges[i][1]][1]);
         ctx.closePath();
         ctx.stroke();
     }
@@ -529,76 +527,79 @@ function draw() {
         ctx.lineWidth = LINE_BORDER_WIDTH;
         ctx.strokeStyle = 'black';
         ctx.beginPath();
-        ctx.moveTo(cx+sx*dd[0][line_start-1][0],cy+sy*dd[0][line_start-1][1]);
-        if (hilight && hilight!==line_start)
-            ctx.lineTo(cx+sx*dd[0][hilight-1][0],cy+sy*dd[0][hilight-1][1]);
+        ctx.moveTo(cx+sx*dd.points[line_start-1][0],cy+sy*dd.points[line_start-1][1]);
+        if (highlight && highlight!==line_start)
+            ctx.lineTo(cx+sx*dd.points[highlight-1][0],cy+sy*dd.points[highlight-1][1]);
         else
             ctx.lineTo(cx+sx*line_end[0],cy+sy*line_end[1]);
         ctx.closePath();
         ctx.stroke();
         ctx.lineWidth = LINE_WIDTH;
-        if (hilight && hilight!==line_start)
+        if (highlight && highlight!==line_start)
         {
-            if (hasLine([hilight-1, line_start-1]))
+            if (hasLine([highlight-1, line_start-1])) {
                 ctx.strokeStyle = '#ff4444';
-            else
-                ctx.strokeStyle = '#8888ff';
-        } else
-            ctx.strokeStyle = '#000066';
+            } else {
+                ctx.strokeStyle = '#ec008b';
+            }
+        } else {
+            ctx.strokeStyle = '#ecbed9';
+        }
         ctx.beginPath();
-        ctx.moveTo(cx+sx*dd[0][line_start-1][0],cy+sy*dd[0][line_start-1][1]);
-        if (hilight && hilight!==line_start)
-            ctx.lineTo(cx+sx*dd[0][hilight-1][0],cy+sy*dd[0][hilight-1][1]);
+        ctx.moveTo(cx+sx*dd.points[line_start-1][0],cy+sy*dd.points[line_start-1][1]);
+        if (highlight && highlight!==line_start)
+            ctx.lineTo(cx+sx*dd.points[highlight-1][0],cy+sy*dd.points[highlight-1][1]);
         else
             ctx.lineTo(cx+sx*line_end[0],cy+sy*line_end[1]);
         ctx.closePath();
         ctx.stroke();
     }
 
-    for (var i=dd[0].length-1; i>=0; i--)
+    for (var i=dd.points.length-1; i>=0; i--)
     {
-        if (!fakingit && (selected == i+1 || hilight == i+1 || line_start == i+1))
-            if (dd[0][i][2])
+        if (!equationCurve && (selected == i+1 || highlight == i+1 || line_start == i+1)) {
+            if (dd.points[i][2])
                 ctx.fillStyle = '#FF8888'
             else
-                ctx.fillStyle = '#88FF88';
-        else
-            if (dd[0][i][2])
-                ctx.fillStyle = 'red'
-            else
-                if (fakingit)
-                {
+                ctx.fillStyle = '#b4e0dc';
+         } else {
+            if (dd.points[i][2]) {
+                ctx.fillStyle = 'black'
+            } else {
+                if (equationCurve) {
                     var cccc = fakecolor[""+i];
                     if (cccc == undefined)
                         ctx.fillStyle = '#8888ff';//'blue';
                     else ctx.fillStyle = cccc;
                 } else {
-                  ctx.fillStyle = 'green';
+                  ctx.fillStyle = '#40E0D0';
                 }
+            }
+        }
         ctx.lineWidth = 1;
         ctx.strokeStyle = 'black';
         ctx.beginPath();
-        ctx.arc((cx+sx*dd[0][i][0]),
-                (cy+sy*dd[0][i][1]),
+        ctx.arc((cx+sx*dd.points[i][0]),
+                (cy+sy*dd.points[i][1]),
                 RADIUS/2, 0, Math.PI*2, true);
         ctx.closePath();
         ctx.fill();
         ctx.stroke();
     }
 
-    if (fakingit)
+    if (equationCurve)
     {
-        if (drawdata.length > 2)
-            for (var i=0; i<drawdata[2].length; i++)
+        if (drawdata.hasOwnProperty("finalPoints"))
+            for (var i=0; i<drawdata.finalPoints.length; i++)
             {
                 // console.log(drawdata[2][i]);
-                ctx.fillStyle = fakecolor[""+drawdata[2][i]];
+                ctx.fillStyle = fakecolor[""+drawdata.finalPoints[i]];
 
                 ctx.lineWidth = 1;
                 ctx.strokeStyle = 'black';
                 ctx.beginPath();
-                ctx.arc((cx+sx*dd[0][drawdata[2][i]][0]),
-                        (cy+sy*dd[0][drawdata[2][i]][1]),
+                ctx.arc((cx+sx*dd.points[drawdata.finalPoints[i]][0]),
+                        (cy+sy*dd.points[drawdata.finalPoints[i]][1]),
                         RADIUS/2, 0, Math.PI*2, true);
                 ctx.closePath();
                 ctx.fill();
@@ -609,37 +610,37 @@ function draw() {
         ctx.lineWidth = 1;
         ctx.strokeStyle = 'black';
         ctx.beginPath();
-        ctx.arc((cx+sx*dd[0][dd[0].length-2][0]),
-                (cy+sy*dd[0][dd[0].length-2][1]),
+        ctx.arc((cx+sx*dd.points[dd.points.length-2][0]),
+                (cy+sy*dd.points[dd.points.length-2][1]),
                 RADIUS/2, 0, Math.PI*2, true);
         ctx.closePath();
         ctx.fill();
         ctx.stroke();
 
-        for (var i=0; i<data[1].length; i++)
+        for (var i=0; i<data.edges.length; i++)
         {
             ctx.lineWidth = LINE_BORDER_WIDTH;
             ctx.strokeStyle = 'black';
             ctx.beginPath();
-            ctx.moveTo(cx+sx*data[0][data[1][i][0]][0],cy+sy*data[0][data[1][i][0]][1]);
-            ctx.lineTo(cx+sx*data[0][data[1][i][1]][0],cy+sy*data[0][data[1][i][1]][1]);
+            ctx.moveTo(cx+sx*data.points[data.edges[i][0]][0],cy+sy*data.points[data.edges[i][0]][1]);
+            ctx.lineTo(cx+sx*data.points[data.edges[i][1]][0],cy+sy*data.points[data.edges[i][1]][1]);
             ctx.closePath();
             ctx.stroke();
             ctx.lineWidth = LINE_WIDTH;
             ctx.strokeStyle = 'blue';
             ctx.beginPath();
-            ctx.moveTo(cx+sx*data[0][data[1][i][0]][0],cy+sy*data[0][data[1][i][0]][1]);
-            ctx.lineTo(cx+sx*data[0][data[1][i][1]][0],cy+sy*data[0][data[1][i][1]][1]);
+            ctx.moveTo(cx+sx*data.points[data.edges[i][0]][0],cy+sy*data.points[data.edges[i][0]][1]);
+            ctx.lineTo(cx+sx*data.points[data.edges[i][1]][0],cy+sy*data.points[data.edges[i][1]][1]);
             ctx.closePath();
             ctx.stroke();
         }
 
-        for (var i=0; i<data[0].length; i++)
+        for (var i=0; i<data.points.length; i++)
         {
 
-            if (selected == i+1 || hilight == i+1 || line_start == i+1)
+            if (selected == i+1 || highlight == i+1 || line_start == i+1)
             {
-                if (data[0][i][2])
+                if (data.points[i][2])
                 {
                     ctx.fillStyle = '#FF8888'
                 }
@@ -652,7 +653,7 @@ function draw() {
              }
              else
              {
-                if (data[0][i][2])
+                if (data.points[i][2])
                     ctx.fillStyle = 'red'
                 else
                 {
@@ -669,90 +670,20 @@ function draw() {
             }
 
             if (i == 3) { // there's no comments on the original code but i think i==3 means that its the drawing vertex
-              pushToTrace(data[0][i][0], data[0][i][1]);
+              pushToTrace(data.points[i][0], data.points[i][1]);
             }
 
             ctx.lineWidth = 1;
             ctx.strokeStyle = 'black';
             ctx.beginPath();
-            ctx.arc((cx+sx*data[0][i][0]),
-                    (cy+sy*data[0][i][1]),
+            ctx.arc((cx+sx*data.points[i][0]),
+                    (cy+sy*data.points[i][1]),
                     RADIUS/2, 0, Math.PI*2, true);
             ctx.closePath();
             ctx.fill();
             ctx.stroke();
         }
     }
-
-    if (displayhelp)
-    {
-        ctx.lineWidth=1;
-        ctx.lineStyle="#ffff00";
-        ctx.font="18px sans-serif";
-        if (!is_chrome) {
-            ctx.fillStyle="#AA0000";
-            ctx.fillText("  WARNING: Use Chrome for best results", 20, 40);
-        }
-        ctx.fillStyle="#000000";
-        var helptext = "Normal Controls:\n" +
-                        "  Drag points to move them\n" +
-                        "  Drag screen to move view\n" +
-                        "  Scrollwheel to zoom in/out\n" +
-                        "  H - toggle this help text"
-        var extra_helptext = "\n\n" +
-                        "Edit Mode Controls:\n" +
-                        "  Ctrl + click - add free point\n" +
-                        "  Ctrl+Shift + click - add fixed point\n" +
-                        "  Alt + click - remove point\n" +
-                        "  Shift + drag - add line \n" +
-                        "  Capslock - toggle edit mode\n" +
-                        "  Tab - toggle physics mode"
-
-        var kempe_helptext = "\n"+
-                        "  R - Switch linkage construction algorithm.\n" +
-                        "      Optimized linkage has less nodes for faster render,\n"+
-                        "      but might not result in a proper linkage.\n\n" +
-                        "Tips:\n" +
-                        "  Pick functions which can be visualized within\n" +
-                        "    the disc of radius 2 centered on the origin\n" +
-                        "  Do not pick functions which cross the origin\n" +
-                        "  Simple functions might not work correctly\n" +
-                        "  Only the unbraced kempe linkage is displayed, this means that\n" +
-                        "    the linkage displayed might have more freedoms of movement\n" +
-                        "    if realized physically - this is only a visualization"
-        if (!fakingit) {
-            helptext = helptext + extra_helptext;
-        } else {
-            helptext = helptext + kempe_helptext;
-            if (accuraterender)
-                ctx.fillText("Accurate Linkage", 20, 20);
-            else
-                ctx.fillText("Optimized Linkage", 20, 20);
-        }
-        var offset = 20;
-        text = helptext.split("\n");
-        for (var i=0; i<text.length; i++) {
-            ctx.fillText(text[i], 20, 60 + i*offset);
-        }
-
-    }
-
-    // ctx.fillStyle = 'green';
-    // ctx.lineWidth = 1;
-    // ctx.strokeStyle = 'black';
-    // ctx.beginPath();
-    // ctx.arc((cx+sx*data[0][3][0]),
-    //         (cy+sy*data[0][3][1]),
-    //         RADIUS/2, 0, Math.PI*2, true);
-    // ctx.closePath();
-    // ctx.fill();
-    // ctx.stroke();
-
-
-
-
-
-
 }
 
 function toggleEditMode() {
@@ -785,15 +716,14 @@ function figureAngles(a, b) {
 
 var count = 0;
 function update() {
-    handleKeys();
     if (!edit_mode && USEPHYSICS)
     {
-        // for (var i=0; i<data[1].length; i++)
+        // for (var i=0; i<data.edges.length; i++)
         // {
-        //     var x = data[0][data[1][i][0]][0]-data[0][data[1][i][1]][0];
-        //     var y = data[0][data[1][i][0]][1]-data[0][data[1][i][1]][1];
+        //     var x = data.points[data.edges[i][0]][0]-data.points[data.edges[i][1]][0];
+        //     var y = data.points[data.edges[i][0]][1]-data.points[data.edges[i][1]][1];
         //     var len = Math.sqrt(x*x+y*y);
-        //     if (Math.abs(len-data[1][i][2]) > 0.1)
+        //     if (Math.abs(len-data.edges[i][2]) > 0.1)
         //     {
 
         //     }
@@ -802,8 +732,8 @@ function update() {
         // {
         //     if (!(cmx === undefined || cmy === undefined))
         //     {
-        //         var dx = cmx-data[0][selected-1][0];
-        //         var dy = cmy-data[0][selected-1][1];
+        //         var dx = cmx-data.points[selected-1][0];
+        //         var dy = cmy-data.points[selected-1][1];
         //         if (!(Math.abs(dx) <= RADIUS/2.0/sx && Math.abs(dy) <= RADIUS/2.0/sx))
         //         {
         //             var forces = evalForces2(data, selected-1, dx, dy);
@@ -818,12 +748,12 @@ function update() {
         // var forces = evalForces(data);
         // timeStep(data, forces, 0.1);
 
-        if (fakingit)
+        if (equationCurve)
         {
             if (selected)
             {
-                var dx = cmx-data[0][selected-1][0];
-                var dy = cmy-data[0][selected-1][1];
+                var dx = cmx-data.points[selected-1][0];
+                var dy = cmy-data.points[selected-1][1];
                 var forces = pgramForces(data, selected-1, dx, dy);
                 // RK4step(data, forces, 0.1);
                 timeStep(data, forces, 0.1);
@@ -832,21 +762,21 @@ function update() {
             } else
             {
                 var i = 0;
-                for (i=0; i<data[0].length; i++)
-                    if (!data[0][i][2]) break;
+                for (i=0; i<data.points.length; i++)
+                    if (!data.points[i][2]) break;
                 var forces = pgramForces(data, i, 0, 0);
                 // RK4step(data, forces, 0.1);
                 timeStep(data, forces, 0.1);
                 // if (count<=10)
                 //     console.log(forces);
             }
-            figureAngles(data[0][1], data[0][2]);
+            figureAngles(data.points[1], data.points[2]);
             fakecolor = {};
 
             if (!accuraterender)
-                drawdata = createOptimizedKempeLinkage(data[0][1], data[0][2],terms, fakecolor, anglea, angleb);
+                drawdata = createOptimizedKempeLinkage(data.points[1], data.points[2],terms, fakecolor, anglea, angleb);
             else
-                drawdata = createKempeLinkage(normalize(data[0][1]),normalize(data[0][2]),terms, anglea, angleb);
+                drawdata = createKempeLinkage(normalize(data.points[1]),normalize(data.points[2]),terms, anglea, angleb);
 
 
         } else
@@ -856,8 +786,8 @@ function update() {
                 for (var i=0; i<bodies.length; i++)
                 {
                     var pos = bodies[i].GetPosition();
-                    data[0][i][0] = pos.x;
-                    data[0][i][1] = pos.y;
+                    data.points[i][0] = pos.x;
+                    data.points[i][1] = pos.y;
                     // console.log(pos);
                 }
                 world.Step(1 / 60, 10, 10);
@@ -867,8 +797,8 @@ function update() {
                 count++;
                 if (selected)
                 {
-                    var dx = cmx-data[0][selected-1][0];
-                    var dy = cmy-data[0][selected-1][1];
+                    var dx = cmx-data.points[selected-1][0];
+                    var dy = cmy-data.points[selected-1][1];
                     var forces = evalForces3(data, selected-1, dx, dy);
                     // RK4step(data, forces, 0.1);
                     timeStep(data, forces, 0.1);
@@ -877,8 +807,8 @@ function update() {
                 } else
                 {
                     var i = 0;
-                    for (i=0; i<data[0].length; i++)
-                        if (!data[0][i][2]) break;
+                    for (i=0; i<data.points.length; i++)
+                        if (!data.points[i][2]) break;
                     var forces = evalForces3(data, i, 0, 0);
                     // RK4step(data, forces, 0.1);
                     timeStep(data, forces, 0.1);
@@ -898,15 +828,15 @@ function handleMouseClick(e) {
             var mx = (e.offsetX-cx)/sx;
             var my = (e.offsetY-cy)/sy;
 
-            data[0].push([mx, my, currentKeysDown[16]]);
+            data.points.push([mx, my, currentKeysDown[16]]);
 
             return;
         } else if (currentKeysDown[18]) {
             var mx = (e.offsetX-cx)/sx;
             var my = (e.offsetY-cy)/sy;
-            for (var i=0; i<data[0].length; i++)
+            for (var i=0; i<data.points.length; i++)
             {
-                if ((Math.abs(data[0][i][0]-mx) <= RADIUS/2.0/sx) && (Math.abs(data[0][i][1]-my) <= RADIUS/2.0/Math.abs(sy)))
+                if ((Math.abs(data.points[i][0]-mx) <= RADIUS/2.0/sx) && (Math.abs(data.points[i][1]-my) <= RADIUS/2.0/Math.abs(sy)))
                 {
                     removePoint(i);
                     return;
@@ -920,6 +850,8 @@ function handleMouseClick(e) {
 }
 
 function handleMouseHover(e) {
+    var mx = (e.offsetX-cx)/sx;
+    var my = (e.offsetY-cy)/sy;
     if (edit_mode)
     {
         // ctrl
@@ -927,64 +859,57 @@ function handleMouseHover(e) {
             return;
         }
 
-        if (hilight == false)
+        if (highlight == false)
         {
-            var mx = (e.offsetX-cx)/sx;
-            var my = (e.offsetY-cy)/sy;
-            for (var i=0; i<data[0].length; i++)
+            for (var i=0; i<data.points.length; i++)
             {
-                if ((Math.abs(data[0][i][0]-mx) <= RADIUS/2.0/sx) && (Math.abs(data[0][i][1]-my) <= RADIUS/2.0/Math.abs(sy)))
+                if ((Math.abs(data.points[i][0]-mx) <= RADIUS/2.0/sx) && (Math.abs(data.points[i][1]-my) <= RADIUS/2.0/Math.abs(sy)))
                 {
-                    hilight = i+1;
+                    highlight = i+1;
                     lastpos[0] = mx;
                     lastpos[1] = my;
                     break;
                 }
             }
-        } else if (hilight != false)
-        {
-            i = hilight-1;
-            if (!((Math.abs(data[0][i][0]-mx) <= RADIUS/2.0/sx) && (Math.abs(data[0][i][1]-my) <= RADIUS/2.0/Math.abs(sy))))
+        } else if (highlight != false) {
+            i = highlight-1;
+            if (!((Math.abs(data.points[i][0]-mx) <= RADIUS/2.0/sx) && (Math.abs(data.points[i][1]-my) <= RADIUS/2.0/Math.abs(sy))))
             {
-                hilight = false;
+                highlight = false;
             }
         }
 
-    } else
-    {
-        if (selected == false && hilight == false)
+    } else {
+        if (selected == false && highlight == false)
         {
-            var mx = (e.offsetX-cx)/sx;
-            var my = (e.offsetY-cy)/sy;
-            for (var i=0; i<data[0].length; i++)
+            for (var i=0; i<data.points.length; i++)
             {
-                if (data[0][i][2])
+                if (data.points[i][2])
                     continue;
-                if ((Math.abs(data[0][i][0]-mx) <= RADIUS/2.0/sx) && (Math.abs(data[0][i][1]-my) <= RADIUS/2.0/Math.abs(sy)))
+                if ((Math.abs(data.points[i][0]-mx) <= RADIUS/2.0/sx) && (Math.abs(data.points[i][1]-my) <= RADIUS/2.0/Math.abs(sy)))
                 {
-                    hilight = i+1;
+                    highlight = i+1;
                     lastpos[0] = mx;
                     lastpos[1] = my;
                     break;
                 }
             }
-        } else if (selected != false)
-            hilight = selected;
-        else if (hilight != false)
-        {
-            i = hilight-1;
-            if (!((Math.abs(data[0][i][0]-mx) <= RADIUS/2.0/sx) && (Math.abs(data[0][i][1]-my) <= RADIUS/2.0/Math.abs(sy))))
+        } else if (selected != false) {
+            highlight = selected;
+        } else if (highlight != false) {
+            i = highlight-1;
+            if (!((Math.abs(data.points[i][0]-mx) <= RADIUS/2.0/sx) && (Math.abs(data.points[i][1]-my) <= RADIUS/2.0/Math.abs(sy))))
             {
-                hilight = false;
+                highlight = false;
             }
         }
     }
 }
 
 function handleMouseWheel(e) {
-    if (edit_mode)
+    if (e.wheelDelta)
     {
-        if (e.wheelDelta)
+        if (edit_mode)
         {
             var w = e.wheelDelta/120;
             if (w>0)
@@ -1006,11 +931,7 @@ function handleMouseWheel(e) {
                     cy = VIEW_HEIGHT/2 + (cy-VIEW_HEIGHT/2)*0.9
                 }
             }
-        }
-    } else
-    {
-        if (e.wheelDelta)
-        {
+        } else {
             var w = e.wheelDelta/120;
             if (w>0)
             {
@@ -1039,7 +960,7 @@ function handleMouseWheel(e) {
 }
 
 function handleMouseDown(e) {
-  drawTrace = true;
+    drawTrace = true;
     if (edit_mode)
     {
         // ctrl
@@ -1051,9 +972,9 @@ function handleMouseDown(e) {
         if (currentKeysDown[16]) {
             var mx = (e.offsetX-cx)/sx;
             var my = (e.offsetY-cy)/sy;
-            for (var i=0; i<data[0].length; i++)
+            for (var i=0; i<data.points.length; i++)
             {
-                if ((Math.abs(data[0][i][0]-mx) <= RADIUS/2.0/sx) && (Math.abs(data[0][i][1]-my) <= RADIUS/2.0/Math.abs(sy)))
+                if ((Math.abs(data.points[i][0]-mx) <= RADIUS/2.0/sx) && (Math.abs(data.points[i][1]-my) <= RADIUS/2.0/Math.abs(sy)))
                 {
                     line_start = i+1;
                     break;
@@ -1071,9 +992,9 @@ function handleMouseDown(e) {
         {
             var mx = (e.offsetX-cx)/sx;
             var my = (e.offsetY-cy)/sy;
-            for (var i=0; i<data[0].length; i++)
+            for (var i=0; i<data.points.length; i++)
             {
-                if ((Math.abs(data[0][i][0]-mx) <= RADIUS/2.0/sx) && (Math.abs(data[0][i][1]-my) <= RADIUS/2.0/Math.abs(sy)))
+                if ((Math.abs(data.points[i][0]-mx) <= RADIUS/2.0/sx) && (Math.abs(data.points[i][1]-my) <= RADIUS/2.0/Math.abs(sy)))
                 {
                     selected = i+1;
                     lastpos[0] = mx;
@@ -1088,16 +1009,14 @@ function handleMouseDown(e) {
                 lastpos[1] = e.offsetY;
             }
         }
-
-    } else
-    {
+    } else {
         var mx = (e.offsetX-cx)/sx;
         var my = (e.offsetY-cy)/sy;
-        for (var i=0; i<data[0].length; i++)
+        for (var i=0; i<data.points.length; i++)
         {
-            if (data[0][i][2])
+            if (data.points[i][2])
                 continue;
-            if ((Math.abs(data[0][i][0]-mx) <= RADIUS/2.0/sx) && (Math.abs(data[0][i][1]-my) <= RADIUS/2.0/Math.abs(sy)))
+            if ((Math.abs(data.points[i][0]-mx) <= RADIUS/2.0/sx) && (Math.abs(data.points[i][1]-my) <= RADIUS/2.0/Math.abs(sy)))
             {
                 selected = i+1;
                 lastpos[0] = mx;
@@ -1150,8 +1069,8 @@ function handleMouseMove(e) {
             {
                 var mx = (e.offsetX-cx)/sx;
                 var my = (e.offsetY-cy)/sy;
-                data[0][selected-1][0] += mx-lastpos[0];
-                data[0][selected-1][1] += my-lastpos[1];
+                data.points[selected-1][0] += mx-lastpos[0];
+                data.points[selected-1][1] += my-lastpos[1];
                 lastpos[0] = mx;
                 lastpos[1] = my;
             } else if (dragging)
@@ -1182,10 +1101,10 @@ function handleMouseMove(e) {
             }
             // var dx = mx-lastpos[0];
             // var dy = my-lastpos[1];
-            var dx = mx-data[0][selected-1][0];
-            var dy = my-data[0][selected-1][1];
-            // data[0][selected-1][0] += dx;
-            // data[0][selected-1][1] += dy;
+            var dx = mx-data.points[selected-1][0];
+            var dy = my-data.points[selected-1][1];
+            // data.points[selected-1][0] += dx;
+            // data.points[selected-1][1] += dy;
             lastpos[0] = mx;
             lastpos[1] = my;
             // call physics code here
@@ -1219,11 +1138,11 @@ function handleMouseUp(e) {
                 var mx = (e.offsetX-cx)/sx;
                 var my = (e.offsetY-cy)/sy;
                 var endi = false;
-                for (var i=0; i<data[0].length; i++)
+                for (var i=0; i<data.points.length; i++)
                 {
                     if (i == line_start-1)
                         continue;
-                    if ((Math.abs(data[0][i][0]-mx) <= RADIUS/2.0/sx) && (Math.abs(data[0][i][1]-my) <= RADIUS/2.0/Math.abs(sy)))
+                    if ((Math.abs(data.points[i][0]-mx) <= RADIUS/2.0/sx) && (Math.abs(data.points[i][1]-my) <= RADIUS/2.0/Math.abs(sy)))
                     {
                         endi = i+1;
                         break;
@@ -1278,21 +1197,21 @@ function handleMouseOut(e) {
         // shift - create line
         if (currentKeysDown[16]) {
             line_start = false;
-            hilight = false;
+            highlight = false;
         }
 
         // no keys
         {
             selected = false;
             dragging = false;
-            hilight = false;
+            highlight = false;
         }
     } else
     {
         selected = false;
         dragging = false;
-        hilight = false;
-        if (BOX2DPHYSICS)
+        highlight = false;
+        if (mousejoint !== null && BOX2DPHYSICS)
         {
             world.DestroyJoint(mousejoint);
             mouseJoint = null;
@@ -1333,116 +1252,7 @@ function handleKeyUp(event) {
 }
 
 function handleKeyPress(event) {
-    // tab
-    if (event.keyCode == 9)
-    {
-        if (fakingit)
-            return;
-        togglePhysicsMode();
-        checkboxphysicsMode.checked = BOX2DPHYSICS;
-    }
-    // shift
-    else if (event.keyCode == 16) {
 
-    }
-
-    // ctrl
-    else if (event.keyCode == 17) {
-
-    }
-
-    // capslock
-    else if (event.keyCode == 20) {
-        if (fakingit)
-            return;
-        // edit_mode = !edit_mode;
-        toggleEditMode();
-        checkboxeditMode.checked = edit_mode;
-        dragging = false;
-        selected = false;
-        line_start = false;
-    }
-
-    // left
-    else if (event.keyCode == 37) {
-    }
-
-    // right
-    else if (event.keyCode == 39) {
-    }
-
-    // up
-    else if (event.keyCode == 38) {
-        // sx /= 0.9;
-        // sy /= 0.9;
-    }
-
-    // down
-    else if (event.keyCode == 40) {
-        // sx *= 0.9;
-        // sy *= 0.9;
-    }
-
-    else if (event.keyCode == 'A'.charCodeAt()) {
-        sx /= 0.9;
-        sy /= 0.9;
-        cx = VIEW_WIDTH/2 + (cx-VIEW_WIDTH/2)/0.9
-        cy = VIEW_HEIGHT/2 + (cy-VIEW_HEIGHT/2)/0.9
-    }
-
-    else if (event.keyCode == 'Z'.charCodeAt()) {
-        sx *= 0.9;
-        sy *= 0.9;
-        cx = VIEW_WIDTH/2 + (cx-VIEW_WIDTH/2)*0.9
-        cy = VIEW_HEIGHT/2 + (cy-VIEW_HEIGHT/2)*0.9
-    }
-
-    else if (event.keyCode == 'H'.charCodeAt()) {
-        displayhelp = !displayhelp;
-    }
-
-    else if (event.keyCode == 'R'.charCodeAt()) {
-        accuraterender = !accuraterender;
-    }
-}
-
-var angspeed = 0.01;
-var speed = 0.1;
-function handleKeys() {
-    var m = deltaTime/(1000.0/60);
-    // if (currentKeysDown['W'.charCodeAt()])
-    // {
-    // }
-
-    // shift
-    if (currentKeysDown[16]) {
-
-    }
-
-    // ctrl
-    if (currentKeysDown[17]) {
-
-    }
-
-    // left
-    if (currentKeysDown[37]) {
-        // ply.x -= PLY_SPEED*m;
-    }
-
-    // right
-    if (currentKeysDown[39]) {
-        // ply.x += PLY_SPEED*m;
-    }
-
-    // up
-    if (currentKeysDown[38]) {
-        // ply.y -= PLY_SPEED*m;
-    }
-
-    // down
-    if (currentKeysDown[40]) {
-        // ply.y += PLY_SPEED*m;
-    }
 }
 
 var lastTime = 0;
@@ -1466,21 +1276,17 @@ function tick() {
 }
 
 
-var checkboxeditMode;
-function updateEditMode() {
-    if (!checkboxeditMode) checkboxeditMode = document.getElementById("checkboxeditMode");
-    edit_mode = checkboxeditMode.checked;
+function updateEditMode(globals) {
+    edit_mode = (globals.controlMode == "edit");
     if (!edit_mode)
         initProcessLinesAndPoints();
 }
 
-var checkboxphysicsMode;
-function updatePhysicsMode() {
-    if (!checkboxphysicsMode) checkboxphysicsMode = document.getElementById("checkboxphysics");
-    var isedit = edit_mode;
+function updatePhysicsMode(globals) {
+    var isedit = (globals.controlMode == "edit");
     if (!isedit)
         toggleEditMode();
-    BOX2DPHYSICS = checkboxphysicsMode.checked;
+    BOX2DPHYSICS = (globals.physicsEngine == "box2d");
     if (!isedit)
         toggleEditMode();
 }
@@ -1506,7 +1312,7 @@ function updateLinkage() {
     drawdata = createOptimizedKempeLinkage([4,8],[8,4],terms, fakecolor);
     anglea = Math.atan2(8,4);
     angleb = Math.atan2(4,8);
-    console.log(drawdata[2]);
+    console.log(drawdata.finalPoints);
     // mul = createKempeLinkage(1,1,terms);
     // data = mul;
     physicsInit(equs);
@@ -1532,7 +1338,7 @@ function initlinkage() {
     drawdata = createOptimizedKempeLinkage([4,8],[8,4],terms, fakecolor);
     anglea = Math.atan2(8,4);
     angleb = Math.atan2(4,8);
-    console.log(drawdata[2]);
+    console.log(drawdata.finalPoints);
     // mul = createKempeLinkage(1,1,terms);
     // drawdata = createKempeLinkage(normalize([4,8]),normalize([8,4]),terms);
     // data = mul;
@@ -1540,18 +1346,3 @@ function initlinkage() {
     toggleEditMode();
     toggleEditMode();
 }
-
-// in case there's no console
-fakeconsole = {};
-fakeconsole.emptyConsole = {
-    assert : function(){},
-    log : function(){},
-    warn : function(){},
-    error : function(){},
-    debug : function(){},
-    dir : function(){},
-    info : function(){}
-};
-
-if (console && console.log);
-else console = fakeconsole.emptyConsole;

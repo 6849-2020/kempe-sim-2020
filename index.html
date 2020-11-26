@@ -1,37 +1,220 @@
-<html>
-<head>
-<meta charset="utf-8">
-<title>6.849 Project: Linkage Simulations</title>
-</head>
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>6.849 - Kempe Simulator</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+    <link href="dependencies/bootstrap.min.css" rel="stylesheet" type="text/css"/>
+    <link rel="stylesheet" type="text/css" href="dependencies/flat-ui.min.css"/>
+    <link rel="stylesheet" type="text/css" href="dependencies/jquery-ui.min.css"/>
+    <link rel="stylesheet" type="text/css" href="css/nav.css"/>
+    <link rel="stylesheet" type="text/css" href="css/main.css"/>
 
-<body>
+    <script type="text/javascript" src="dependencies/jquery-3.2.1.min.js"></script>
+    <script type="text/javascript" src="dependencies/jquery-ui.min.js"></script>
+    <script type="text/javascript" src="dependencies/flat-ui.min.js"></script>
 
-<h1>A Practical Implementation of Kempe’s Universality Theorem</h1>
-<h2>Yanping Chen,
-Laura Hallock,
-Eric Söderström,
-Xinyi Zhang</h2>
+    <script type="text/javascript" src="dependencies/Box2dWeb-2.1.a.3.min.js"></script>
+    <script type="text/javascript" src="dependencies/numeric-1.2.3.js"></script>
+    <script type="text/javascript" src="dependencies/colors.min.js"></script>
+    <script type="text/javascript" src="dependencies/fold.js"></script>
 
-<h3>(Final Project for <a href="../">6.849 Fall 2012</a>)</h3>
+    <script type="text/javascript" src="js/cas.js"></script>
+    <script type="text/javascript" src="js/physics.js"></script>
+    <script type="text/javascript" src="js/kempe-linkage.js"></script>
+    <script type="text/javascript" src="js/webgl-utils.js"></script>
+    <script type="text/javascript" src="js/kempe.js"></script>
+    <script type="text/javascript" src="js/fold-actions.js"></script>
+    <script type="text/javascript" src="js/controls.js"></script>
+  </head>
+  <body>
 
-<p>
-For this project, we implemented a JavaScript simulation employing Kempe’s Universality
-Theorem to construct linkages constrained to a user-inputted curve. In addition
-to the literal linkage construction, the implementation includes novel algebraic and physics
-systems, as well as various optimization techniques to simplify the linkage in size and
-complexity.
+    <div class="modal fade" id="aboutModal" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-body">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                      <span aria-hidden="true">&times;</span>
+                    </button>
+                    <p>
+                    <b>Linkage Simulator</b><br/>
+                        This app allows you to construct interesting linkages.<br /><br />
 
-<ul>
-<li> <h2><a href="project.pdf">Project Writeup (PDF)</a></h2>
-<li> <h2>Demos</h2>
-  <ol>
-  <li> <h2><a href="linkagesim.html">Universal Linkage Simulation</a></h2>
-  <li> <h2><a href="kempesim.html">Kempe Linkage Simulation</a></h2>
-  </ol>
-<li> <h2><a href="https://github.com/6849-2020/kempe-sim-2012">Source code on GitHub</a></h2>
-</ul>
+                        Heavily based on <b>A Practical Implementation of Kempe’s Universality Theorem</b>,
+                        a 6.849-2012 final project by Yanping Chen, Laura Hallock, Eric Söderström, Xinyi Zhang.
+                    </p>
+                </div>
+            </div><!-- /.modal-content -->
+        </div><!-- /.modal-dialog -->
+    </div><!-- /.modal -->
 
-</body>
+    <nav id="globalNav" class="navbar navbar-inverse navbar-embossed" role="navigation">
+        <div class="collapse navbar-collapse" id="navbar-collapse-01">
+            <ul class="nav navbar-nav navbar-left">
+                <li class="dropdown navDropdown">
+                    <a href="#" class="dropdown-toggle" data-toggle="dropdown">File <b class="caret"></b></a>
+                    <span class="dropdown-arrow"></span>
+                    <ul class="dropdown-menu" id="file_menu"  style="min-width: 200px;">
+                      <li><a id="importFOLD" href="#">Import... (FOLD)</a></li>
+                      <li><a id="importTips" href="#">File Import Tips</a></li>
+                      <li class="divider"></li>
+                      <li><a id="saveFOLD" href="#">Save Linkage as FOLD...</a></li>
+                    </ul>
+                </li>
+                <li class="dropdown navDropdown">
+                    <a href="#" class="dropdown-toggle" data-toggle="dropdown">Examples <b class="caret"></b></a>
+                    <span class="dropdown-arrow"></span>
+                    <ul class="dropdown-menu" style="min-width: 200px;">
+                      <li><a id="equationCurve" href="#">Equation Curve</a></li>
+                      <li class="divider"></li>
+                    </ul>
+                </li>
+                <li><a id="about" class="menuHoverControls" target="_blank" href="#">About</a></li>
+            </ul>
+        </div><!-- /.navbar-collapse -->
+
+    </nav>
+
+    <div id="canvasContainer">
+      <canvas id="graphics-canvas"/>
+    </div>
+
+    <div id="controlsBottom">
+        <a href="#" id="resetBottom" class="btn btn-lg btn-default">Reset</a>
+    </div>
+
+    <div id="controlsLeft" class="flipped" style="pointer-events: none">
+        <div>
+            <b>Settings   </b><br/><br/>
+            <div class="indent">
+              <div>
+                  <a href="#" class="seeMore open" data-id="controlSettings"><span class="fui-triangle-down"></span>Control:</a>
+              </div>
+              <div id="controlSettings" class="inlineBlock indent">
+                <div id="controlOptions">
+                    <label class="radio">
+                        <input id="controlModeNormal" name="controlMode" value="normal" data-toggle="radio" class="custom-radio" type="radio"><span class="icons"><span class="icon-unchecked"></span><span class="icon-checked"></span></span>
+                        Normal Mode
+                    </label>
+                    <div id="normalModeOptions" class="indent" style="font-size:14px;">
+                      <table>
+                          <tr>
+                            <td class="controlTableLeft" align="right">Drag</td>
+                            <td>Move Linkage</td>
+                          </tr>
+                          <tr>
+                            <td class="controlTableLeft" align="right">Scroll</td>
+                            <td>Zoom In/Out</td>
+                          </tr>
+                      </table>
+                    </div>
+                    <label class="radio">
+                        <input name="controlMode" value="edit" data-toggle="radio" class="custom-radio" type="radio"><span class="icons"><span class="icon-unchecked"></span><span class="icon-checked"></span></span>
+                        Edit Mode
+                    </label>
+                    <div id="editModeOptions" class="indent" style="font-size:14px;">
+                      <table>
+                          <tr>
+                            <td class="controlTableLeft" align="right">Ctrl+Click</td>
+                            <td>Add Free Point</td>
+                          </tr>
+                          <tr>
+                            <td class="controlTableLeft" align="right">Ctrl+Shift+Click</td>
+                            <td>Add Fixed Point</td>
+                          </tr>
+                          <tr>
+                            <td class="controlTableLeft" align="right">Alt+Click</td>
+                            <td>Remove Point</td>
+                          </tr>
+                          <tr>
+                            <td class="controlTableLeft" align="right">Shift+Drag</td>
+                            <td>Add Link</td>
+                          </tr>
+                      </table>
+                    </div>
+                </div><br/>
+              </div><br/>
+              <div>
+                  <a href="#" class="seeMore closed" data-id="physicsSettings"><span class="fui-triangle-down"></span>Physics Engine</a>:
+              </div>
+              <div id="physicsSettings" class="hide indent">
+                <label class="radio">
+                    <input name="physicsEngine" value="box2d" data-toggle="radio" class="custom-radio" type="radio"><span class="icons"><span class="icon-unchecked"></span><span class="icon-checked"></span></span>
+                    Box2D
+                </label>
+                <label class="radio">
+                    <input name="physicsEngine" value="chsz" data-toggle="radio" class="custom-radio" type="radio"><span class="icons"><span class="icon-unchecked"></span><span class="icon-checked"></span></span>
+                    C.H.S.Z.
+                </label>
+              </div>
+              <br/>
+              <div class="extraSpace"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="exportFOLDModal" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-med">
+            <div class="modal-content">
+                <div class="modal-body">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                      <span aria-hidden="true">&times;</span>
+                    </button>
+                    <b>EXPORT FOLD</b><br/><br/>
+                    Filename: &nbsp;&nbsp;<input id="foldFilename" value="" placeholder="" class="bigInput text form-control" type="text"> .fold<br/><br/>
+                    Author: &nbsp;&nbsp;<input id="foldAuthor" value="" placeholder="" class="bigInput text form-control" type="text"><br/><br/>
+                    <label class="bigLabel checkbox" for="exportFoldEdgeLengths">
+                        <input id="exportFoldEdgeLengths" data-toggle="checkbox" class="custom-checkbox layersSelector" type="checkbox"><span class="icons"><span class="icon-unchecked"></span><span class="icon-checked"></span></span>
+                        Save edge lengths
+                    </label>
+                    <span class="smallTxt">For more information about the FOLD file format, see the <a target="_blank" href="https://github.com/edemaine/fold">offical docs</a>.
+                    Use the <a href="https://edemaine.github.io/fold/examples/foldviewer.html" target="_blank">FOLD viewer</a> to check that your file has been exported correctly.</span>
+                </div>
+                <div class="modal-footer">
+                    <button id="doFOLDsave" type="button" class="actionButton btn btn-success" data-dismiss="modal">Save</button>
+                </div>
+            </div><!-- /.modal-content -->
+        </div><!-- /.modal-dialog -->
+    </div><!-- /.modal -->
+    <div class="modal fade" id="warningModal" tabindex="-1" role="dialog">
+        <div class="modal-dialog sm">
+            <div class="modal-content">
+                <div class="modal-body">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                      <span aria-hidden="true">&times;</span>
+                    </button>
+                    <p id="warningMessage"></p>
+                </div>
+            </div><!-- /.modal-content -->
+        </div><!-- /.modal-dialog -->
+    </div><!-- /.modal -->
+
+    <a id="downloadAnchorElem" style="display:none"></a>
+
+  <script type="module">
+
+    var globals = {
+      controlMode: "normal",
+      physicsEngine: "box2d",
+      exportFoldEdgeLengths : true,
+      setFoldData : function (fold) {
+        console.log(fold);
+      },
+      warn : function (msg){
+          if (($("#warningMessage").html()) != "") $("#warningMessage").append("<br/><hr>" + msg);
+          else $("#warningMessage").html(msg);
+          if (!$('#warningModal').hasClass('show')) $("#warningModal").modal("show");
+      }
+    }
+
+    initImporter(globals);
+    initControls(globals);
+    kempeStart(globals);
 
 
+  </script>
+    <!-- get user input OBJ file -->
+    <input id="fileSelector" type="file" style="visibility:hidden" />
+
+  </body>
 </html>

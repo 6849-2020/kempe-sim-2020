@@ -1,5 +1,5 @@
 //FIX FIND LINE, REFLECT
- 
+
  function createParent(a,b,l){
     var points = [[0,0,true],[a[0],a[1],false],[b[0],b[1],false],[a[0]+b[0],a[1]+b[1],false]];
     var l = 4*Math.sqrt(5);
@@ -17,7 +17,7 @@
  INPUT: Terms in format alpha,beta,[c_1,ma_1,mb_1,d_1],
  [c_2,ma_2,mb_2,d_2]...]
 
- RETURNS: List of linkages for each cosine term 
+ RETURNS: List of linkages for each cosine term
  */
 function createKempeLinkage(a,b,terms,anga,angb){
     var final_term_links = [];
@@ -32,7 +32,7 @@ function createKempeLinkage(a,b,terms,anga,angb){
         linkage_pts = linkage_pts.concat(linkage_term[0]);
         //alert(JSON.stringify(linkage_term));
         final_term_links.push(linkage_pts.length-1);
-    
+
         var shift_edges = [];
         for(var j = 0; j < linkage_term[1].length; j++){
             var newp1 = linkage_term[1][j][0];
@@ -58,7 +58,7 @@ function createKempeLinkage(a,b,terms,anga,angb){
         linkage_pts.push([0,0,false]);
         //alert(JSON.stringify(linkage_pts));
     }
-    
+
     //alert(JSON.stringify(linkage_pts));
     for ( var k = 1; k < final_term_links.length; k++){
         var c_i = final_term_links[k];
@@ -82,7 +82,7 @@ function createKempeLinkage(a,b,terms,anga,angb){
                 linkage_edges.push([linkage_pts.length-1,i1,1],[linkage_pts.length-1,i2,1]);
                 A = n_pt;
                 i1 = linkage_pts.length-1;
-                i2 = ts + i-1; 
+                i2 = ts + i-1;
                 B = C;
                 C = linkage_pts[ts + i-1];
                 //alert(JSON.stringify(linkage_pts));
@@ -111,7 +111,7 @@ function createKempeLinkage(a,b,terms,anga,angb){
     linkage_pts.push([xx,yy, false]);
     // fakecolor[""+(pts.length-1)] = 'black';
 
-    return [linkage_pts,linkage_edges];
+    return {points: linkage_pts, edges: linkage_edges};
 }
 
 function createOptimizedKempeLinkage(a, b, terms, fakecolor, anglea, angleb)
@@ -238,7 +238,7 @@ function createOptimizedKempeLinkage(a, b, terms, fakecolor, anglea, angleb)
 
         lines = lines.concat(p[1]);
     }
-    
+
     if (maxb>1 || minb<0)
     {
         shift = pts.length;
@@ -338,7 +338,7 @@ function createOptimizedKempeLinkage(a, b, terms, fakecolor, anglea, angleb)
 
         lines = lines.concat(p[1]);
     }
-    
+
     // console.log(maxa, mina, maxb, minb);
     // console.log(apos, bpos, aneg, bneg);
 
@@ -454,7 +454,7 @@ function createOptimizedKempeLinkage(a, b, terms, fakecolor, anglea, angleb)
     }
 
     fakecolor[""+(pts.length-1)] = 'brown';
-    
+
     //alert(JSON.stringify(pts));
     for ( var k = 1; k < finalpts.length; k++){
         var c_i = finalpts[k];
@@ -478,7 +478,7 @@ function createOptimizedKempeLinkage(a, b, terms, fakecolor, anglea, angleb)
                 lines.push([pts.length-1,i1,1],[pts.length-1,i2,1]);
                 A = n_pt;
                 i1 = pts.length-1;
-                i2 = ts + i-1; 
+                i2 = ts + i-1;
                 B = C;
                 C = pts[ts + i-1];
                 //alert(JSON.stringify(pts));
@@ -505,7 +505,7 @@ function createOptimizedKempeLinkage(a, b, terms, fakecolor, anglea, angleb)
 
     fakecolor[""+(pts.length-1)] = 'green';
 
-    return [pts, lines, finalpts];
+    return {points: pts, edges: lines, finalPoints: finalpts};
 }
 
 // 0 = root
@@ -773,7 +773,7 @@ function createLinkage(parent, params, anga, angb){
   //parallelogram [p_0,p_a,p_b,p_f]
 
   //m1 looks like [p_0,p_a........f_1], remove first two pts,
-  //shift edges not 0,1 by 2 
+  //shift edges not 0,1 by 2
   var mul_one_pts = mul_one[0].slice();
   mul_one_pts.splice(0,2);
   var mul_one_edges = [];
@@ -805,16 +805,16 @@ function createLinkage(parent, params, anga, angb){
             newp1 = 2;
         }
         else{
-            newp1 = newp1 + shift; 
-        }   
+            newp1 = newp1 + shift;
+        }
     }
     if (newp2 != 0){
         if(newp2 == 1){
             newp2 = 2;
         }
         else{
-            newp2 = newp2 + shift; 
-        }   
+            newp2 = newp2 + shift;
+        }
     }
     mul_two_edges.push([newp1,newp2,mul_two[1][i][2]]);
   }
@@ -916,11 +916,11 @@ function createMLinkage(n,p1,p2,l){
         len = pts.length;
         e_1 = [len-2,len-1,unit_l];
         e_2 = [0,len-1,unit_l/2.0];
-        e_3 = [len-2,3,unit_l*(3/4.0)]; 
+        e_3 = [len-2,3,unit_l*(3/4.0)];
         e_4 = [len-2,1,unit_l*(1/4.0)];
         newedges = [e_1,e_2,e_3,e_4];
         edges = edges.concat(newedges);
-        unit_l = unit_l/2.0; 
+        unit_l = unit_l/2.0;
 
     }
     for(var j = 2; j < n; j++){
@@ -933,7 +933,7 @@ function createMLinkage(n,p1,p2,l){
         e_2 = [0,len-1,unit_l/2.0];
 
         //Edges to make sure point anchored on bar
-        e_3 = [len-2,len-3,unit_l*(3/4.0)]; 
+        e_3 = [len-2,len-3,unit_l*(3/4.0)];
         e_4 = [len-2,len-4,unit_l*(1/4.0)];
         newedges = [e_1,e_2,e_3,e_4];
         edges = edges.concat(newedges);
@@ -951,7 +951,7 @@ function createMLinkage(n,p1,p2,l){
 }
 
 /*
-INPUT: 3 points on the anchor parallelogram, the length of the short side of the anchor 
+INPUT: 3 points on the anchor parallelogram, the length of the short side of the anchor
 */
 function mulContraPara(p1,p2,l){
     var x1 = p1[0];
@@ -989,7 +989,7 @@ function createALinkage(root, p1, p2, angle, length, term, anga, angb)
         // if (Math.abs(ang-ang1) > Math.PI/2)
         // if (ang1 > ang2)
         //     ang = ang+Math.PI;
-        
+
     } else
     {
         ang = (term[1]*anga+term[2]*angb)/2;
@@ -1125,7 +1125,7 @@ function midpoint(p1,p2){
 }
 function distance(p1,p2){
     var xdist = p1[0]-p2[0];
-    var ydist = p1[1]-p2[1]; 
+    var ydist = p1[1]-p2[1];
     return Math.sqrt(xdist*xdist+ydist*ydist);
 }
 // $(document).ready(function(){
