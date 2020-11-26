@@ -14,7 +14,7 @@ function evalForces(data) {
 
 
         // nulify force and velocity on fixed nodes
-        if (node[2]) {
+        if (node[2] == 'X') {
             f[i] = [0, 0, node[2], 0, 0];
         }
 
@@ -131,7 +131,7 @@ function evalForces3(data, fi, fx, fy) {
     var mi = 0;
     for (var i=0; i<p.length; i++)
     {
-        if (!p[i][2])
+        if (p[i][2] != 'X')
         {
             mr.push(m.length);
             m.push(i);
@@ -161,7 +161,7 @@ function evalForces3(data, fi, fx, fy) {
             jd[i].push(0);
             jd[i].push(0);
         }
-        if (!p[e[i][0]][2])
+        if (p[e[i][0]][2] != 'X')
         {
             var mm = mr[e[i][0]];
             j[i][mm*2]   = p[e[i][0]][0] - p[e[i][1]][0];
@@ -169,7 +169,7 @@ function evalForces3(data, fi, fx, fy) {
             jd[i][mm*2]   = p[e[i][0]][3] - p[e[i][1]][3];
             jd[i][mm*2+1] = p[e[i][0]][4] - p[e[i][1]][4];
         }
-        if (!p[e[i][1]][2])
+        if (p[e[i][1]][2] != 'X')
         {
             var mm = mr[e[i][1]];
             j[i][mm*2]   =  p[e[i][1]][0] - p[e[i][0]][0];
@@ -233,7 +233,7 @@ function evalForces3(data, fi, fx, fy) {
     var f = [];
     for (var i=0; i<p.length; i++)
     {
-        if (p[i][2])
+        if (p[i][2] == 'X')
         {
             f.push([0,0,true,0,0]);
         } else
@@ -364,7 +364,7 @@ function pgramForces(pgram, fi, fx, fy) {
     var mi = 0;
     for (var i=0; i<p.length; i++)
     {
-        if (!p[i][2])
+        if (p[i][2] != 'X')
         {
             mr.push(m.length);
             m.push(i);
@@ -394,7 +394,7 @@ function pgramForces(pgram, fi, fx, fy) {
             jd[i].push(0);
             jd[i].push(0);
         }
-        if (!p[e[i][0]][2])
+        if (p[e[i][0]][2] != 'X')
         {
             var mm = mr[e[i][0]];
             j[i][mm*2]   = p[e[i][0]][0] - p[e[i][1]][0];
@@ -402,7 +402,7 @@ function pgramForces(pgram, fi, fx, fy) {
             jd[i][mm*2]   = p[e[i][0]][3] - p[e[i][1]][3];
             jd[i][mm*2+1] = p[e[i][0]][4] - p[e[i][1]][4];
         }
-        if (!p[e[i][1]][2])
+        if (p[e[i][1]][2] != 'X')
         {
             var mm = mr[e[i][1]];
             j[i][mm*2]   =  p[e[i][1]][0] - p[e[i][0]][0];
@@ -487,7 +487,7 @@ function pgramForces(pgram, fi, fx, fy) {
     var f = [];
     for (var i=0; i<p.length; i++)
     {
-        if (p[i][2])
+        if (p[i][2] == 'X')
         {
             f.push([0,0,true,0,0]);
         } else

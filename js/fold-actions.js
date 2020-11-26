@@ -35,6 +35,10 @@ function initImporter(globals) {
                       }
 
                       // populate edge_lengths
+                      // notice: this is actually not so critical because the edges
+                      // will get recalculated in the internal data structure
+                      // of kempe.js. But we still populate it in case
+                      // another part of the code will want to use that
                       if (!fold.edges_length) {
                         fold.edges_length = [];
                         for (var i = 0; i < fold.edges_vertices.length; i++) {
@@ -48,7 +52,7 @@ function initImporter(globals) {
                       if (!fold["vertices_kempe:assignment"]) {
                         fold["vertices_kempe:assignment"] = [];
                         for (var i = 0; i < fold.vertices_coords.length; i++) {
-                          fold["vertices_kempe:assignment"].push("F");
+                          fold["vertices_kempe:assignment"].push('F');
                         }
                       }
 
@@ -87,15 +91,7 @@ function saveFOLD(globals) {
   var vertices_assignment = [];
   for (var i = 0; i < d.points.length; i++) {
     vertices_coords.push([d.points[i][0], d.points[i][1]]);
-    if (d.points[i][2]) {
-      vertices_assignment.push("X"); // fixed
-    } else {
-      if (d.points[i][3]) {
-        vertices_assignment.push("P"); // pen
-      } else {
-        vertices_assignment.push("F"); // free
-      }
-    }
+    vertices_assignment.push(d.points[i][2]); // fixed
   }
 
   var edges_vertices = [];
