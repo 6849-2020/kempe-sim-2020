@@ -117,7 +117,7 @@ function pushToTrace(x, y) {
       traceHistory.push([x, y]);
     }
   }
-  if (traceHistory.length > 1000) {
+  if (traceHistory.length > 5000) {
     traceHistory.shift();
   }
 }
@@ -213,6 +213,7 @@ function createPhysicsWorld() {
 }
 
 function initProcessLinesAndPoints() {
+    traceHistory = [];
     lines = {};
     // console.log(data);
     for (var i=0; i<data.edges.length; i++)
@@ -355,12 +356,12 @@ function initKempe(globals) {
         [
             [0  ,   0 ,   'X'],
             [0  ,   1 ,   'F'],
-            [1  ,   1 ,   'P']
+            [2  ,   1 ,   'P']
         ],
       edges:
         [
             [0, 1,  1],
-            [1, 2,  1],
+            [1, 2,  2],
         ]
     };
 
@@ -395,7 +396,6 @@ function initKempe(globals) {
     lastpos = [0,0];
     line_start = false;
     line_end = [0,0];
-    traceHistory = [];
 
     if (equationCurve)
         data = data2;
@@ -559,7 +559,7 @@ function draw() {
         ctx.fill();
         ctx.stroke();
 
-        if (dd.points[i][2] == 'P')
+        if (!edit_mode && dd.points[i][2] == 'P')
           pushToTrace(dd.points[i][0], dd.points[i][1]);
     }
 

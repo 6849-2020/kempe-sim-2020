@@ -91,7 +91,7 @@ function saveFOLD(globals) {
   var vertices_assignment = [];
   for (var i = 0; i < d.points.length; i++) {
     vertices_coords.push([d.points[i][0], d.points[i][1]]);
-    vertices_assignment.push(d.points[i][2]); // fixed
+    vertices_assignment.push(d.points[i][2]);
   }
 
   var edges_vertices = [];

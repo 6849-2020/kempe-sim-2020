@@ -9,6 +9,10 @@ function initControls(globals){
       $('#aboutModal').modal('show');
   });
 
+  setLink("#tips", function(){
+      $('#tipsModal').modal('show');
+  });
+
   setLink("#resetBottom", function() {
     initKempe(globals);
   });

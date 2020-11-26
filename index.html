@@ -56,7 +56,7 @@
                     <span class="dropdown-arrow"></span>
                     <ul class="dropdown-menu" id="file_menu"  style="min-width: 200px;">
                       <li><a id="importFOLD" href="#">Import... (FOLD)</a></li>
-                      <li><a id="importTips" href="#">File Import Tips</a></li>
+                      <li><a id="tips" href="#">File Import Tips</a></li>
                       <li class="divider"></li>
                       <li><a id="saveFOLD" href="#">Save Linkage as FOLD...</a></li>
                     </ul>
@@ -119,6 +119,10 @@
                             <td>Add Free Point</td>
                           </tr>
                           <tr>
+                            <td class="controlTableLeft" align="right">Ctrl+Alt+Click</td>
+                            <td>Add Pen Point</td>
+                          </tr>
+                          <tr>
                             <td class="controlTableLeft" align="right">Ctrl+Shift+Click</td>
                             <td>Add Fixed Point</td>
                           </tr>
@@ -152,6 +156,36 @@
             </div>
         </div>
     </div>
+
+    <div class="modal fade" id="tipsModal" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-body">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                      <span aria-hidden="true">&times;</span>
+                    </button>
+                    <p><b>FILE IMPORT TIPS</b><br/><br/>
+                        Bad design files will throw errors and create models that explode or cannot be solved, here are some tips for
+                        importing FOLD files that work.<br/><br/>
+                        <b>Importing FOLD:</b><br/><br/>
+                        The FOLD file format is specified in <a target="_blank" href="https://github.com/edemaine/fold">these docs</a>.
+                        This tool imports FOLD v1.1 files with <b>all</b> of the following fields populated:
+                        <ul>
+                            <li>vertices_coords</li>
+                            <li>edges_vertices</li>
+                        </ul>
+                        You may specify the vertex assignment by using the custom <b>vertices_kempe:assignment</b> field
+                        populated with <b>F</b>/<b>P</b>/<b>X</b> values which corresponds to <b>F</b>ree/<b>P</b>en/fi<b>X</b>ed points.
+                        If the vertices_kempe:assignment field is missing, all vertices will be considered as Free.<br/><br />
+                        Note that edges_length are exported to FOLD but are not used internally as they are recalculated using the vertices_coords field.<br/><br/>
+                        If you are unsure whether your FOLD file is valid, you can inspect it using the
+                        <a target="_blank" href="https://edemaine.github.io/fold/examples/foldviewer.html">FOLD Viewer</a>.
+                        If you are having trouble, please refer to the <a target=_blank href="https://github.com/edemaine/fold/blob/master/doc/spec.md">FOLD spec</a>.
+                        <br/><br/>
+                </div>
+            </div><!-- /.modal-content -->
+        </div><!-- /.modal-dialog -->
+    </div><!-- /.modal -->
 
     <div class="modal fade" id="exportFOLDModal" tabindex="-1" role="dialog">
         <div class="modal-dialog modal-med">
