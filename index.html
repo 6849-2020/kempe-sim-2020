@@ -26,6 +26,7 @@
     <script type="text/javascript" src="js/kempe.js"></script>
     <script type="text/javascript" src="js/fold-actions.js"></script>
     <script type="text/javascript" src="js/controls.js"></script>
+    <script type="text/javascript" src="js/linkages.js"></script>
   </head>
   <body>
 
@@ -38,7 +39,7 @@
                     </button>
                     <p>
                     <b>Linkage Simulator</b><br/>
-                        This app allows you to construct interesting linkages.<br /><br />
+                        This app allows you to construct rigid linkages that draw interesting patterns.<br /><br />
 
                         Heavily based on <b>A Practical Implementation of Kempe’s Universality Theorem</b>,
                         a 6.849-2012 final project by Yanping Chen, Laura Hallock, Eric Söderström, Xinyi Zhang.
@@ -62,11 +63,21 @@
                     </ul>
                 </li>
                 <li class="dropdown navDropdown">
-                    <a href="#" class="dropdown-toggle" data-toggle="dropdown">Examples <b class="caret"></b></a>
+                    <a href="#" class="dropdown-toggle" data-toggle="dropdown">Linkages <b class="caret"></b></a>
                     <span class="dropdown-arrow"></span>
                     <ul class="dropdown-menu" style="min-width: 200px;">
-                      <li><a id="equationCurve" href="#">Equation Curve</a></li>
+                      <li><a id="kempeLinkage" href="#">Kempe Linkage</a></li>
                       <li class="divider"></li>
+                      <li><a id="plLinkage" href="#">Peaucellier–Lipkin linkage</a></li>
+                      <li><a id="cLinkage" href="#">C linkage</a></li>
+                    </ul>
+                </li>
+                <li class="dropdown navDropdown">
+                    <a href="#" class="dropdown-toggle" data-toggle="dropdown">View <b class="caret"></b></a>
+                    <span class="dropdown-arrow"></span>
+                    <ul class="dropdown-menu">
+                        <li><a id="viewLinkageDrawing" href="#">Linkage + Drawing</a></li>
+                        <li><a id="viewDrawing" href="#">Drawing</a></li>
                     </ul>
                 </li>
                 <li><a id="about" class="menuHoverControls" target="_blank" href="#">About</a></li>
@@ -119,7 +130,7 @@
                             <td>Add Free Point</td>
                           </tr>
                           <tr>
-                            <td class="controlTableLeft" align="right">Ctrl+Alt+Click</td>
+                            <td class="controlTableLeft" align="right">Ctrl+Space+Click</td>
                             <td>Add Pen Point</td>
                           </tr>
                           <tr>
@@ -127,12 +138,17 @@
                             <td>Add Fixed Point</td>
                           </tr>
                           <tr>
-                            <td class="controlTableLeft" align="right">Alt+Click</td>
+                            <td class="controlTableLeft" align="right">Shift+Alt+Click</td>
                             <td>Remove Point</td>
                           </tr>
                           <tr>
                             <td class="controlTableLeft" align="right">Shift+Drag</td>
-                            <td>Add Link</td>
+                            <td>Add/Remove Edge</td>
+                          </tr>
+
+                          <tr>
+                            <td class="controlTableLeft" align="right">Shift+Space+Drag</td>
+                            <td>Add/Remove Pen Edge</td>
                           </tr>
                       </table>
                     </div>
@@ -210,6 +226,31 @@
             </div><!-- /.modal-content -->
         </div><!-- /.modal-dialog -->
     </div><!-- /.modal -->
+    <div class="modal fade" id="kempeLinkageModal" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-med">
+            <div class="modal-content">
+                <div class="modal-body">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                      <span aria-hidden="true">&times;</span>
+                    </button>
+                    <b>KEMPE LINKAGE</b><br/><br/>
+                    Equation: &nbsp;&nbsp;<input id="kempeEquation" value="x-y+0.3" placeholder="x^2-y" class="bigInput text form-control" type="text"><br/><br/>
+                    <label class="bigLabel radio" for="optimizedRender">
+                        <input id="optimizedRender" name="kempeRenderMode" value="optimized" data-toggle="radio" class="custom-radio" type="radio"><span class="icons"><span class="icon-unchecked"></span><span class="icon-checked"></span></span>
+                        Optimized (Less points and edges)
+                    </label>
+                    <label class="bigLabel radio" for="accurateRender">
+                        <input id="accurateRender" name="kempeRenderMode" value="accurate" data-toggle="radio" class="custom-radio" type="radio"><span class="icons"><span class="icon-unchecked"></span><span class="icon-checked"></span></span>
+                        Accurate
+                    </label>
+                    <span class="smallTxt">Input an algebraic equation (in x, y) to generate a Kempe Linkage that will draw the curve given by the equation inside the disc of radius 2 from the origin.</span>
+                </div>
+                <div class="modal-footer">
+                    <button id="doKempeLinkage" type="button" class="actionButton btn btn-success" data-dismiss="modal">Generate</button>
+                </div>
+            </div><!-- /.modal-content -->
+        </div><!-- /.modal-dialog -->
+    </div><!-- /.modal -->
     <div class="modal fade" id="warningModal" tabindex="-1" role="dialog">
         <div class="modal-dialog sm">
             <div class="modal-content">
@@ -230,7 +271,22 @@
     var globals = {
       controlMode: "normal",
       physicsEngine: "box2d",
+      kempeRenderMode : "optimized",
       exportFoldEdgeLengths : true,
+      data : {
+        points:
+          [
+              [0  ,   0 ,   'X'],
+              [0  ,   1 ,   'F'],
+              [2  ,   1 ,   'P']
+          ],
+        edges:
+          [
+              [0, 1,  1],
+              [1, 2,  2],
+          ]
+      },
+      drawLines : {},
       setFoldData : function (fold) {
         console.log(fold);
       },

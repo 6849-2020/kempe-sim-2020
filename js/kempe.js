@@ -26,12 +26,12 @@ var RADIUS = 16;
 var cx, cy, sx, sy;
 var cmx, cmy;
 var lines = {};
+var drawLines = {};
 var equs;
 var world;
 var bodies;
 var mousejoint = null;
 var BOX2DPHYSICS = false;
-var USEPHYSICS = true;
 var equationCurve;
 var accuraterender = true;
 var fakecolor = {};
@@ -41,7 +41,9 @@ var displayhelp  = true;
 var is_chrome = navigator.userAgent.toLowerCase().indexOf('chrome') > -1;
 
 var drawTrace = false;
-var traceHistory = [];
+var traceHistory = {};
+var traceHistoryEdges = {};
+var showLinkage = true;
 
 
 function kempeStart(globals) {
@@ -77,24 +79,23 @@ function kempeStart(globals) {
 
     initKempe(globals);
 
-    if (equationCurve)
-        initlinkage();
     tick();
+}
+
+function setViewMode(viewMode) {
+  if (viewMode == "drawing") {
+    showLinkage = false;
+  } else {
+    showLinkage = true;
+  }
 }
 
 var last_doc_width;
 var last_doc_length;
 function recalcViewDimentions()
 {
-    var widthminus = -19
-    var heightminus = -80;
-    if (equationCurve)
-    {
-        widthminus = -19;
-        heightminus = -90;
-    }
-    widthminus = 0;
-    heightminus = 0;
+    var widthminus = 0;
+    var heightminus = 0;
     cvs.width = window.innerWidth+widthminus;
     cvs.height = window.innerHeight+heightminus;
     VIEW_WIDTH = cvs.width;+widthminus;
@@ -104,21 +105,40 @@ function recalcViewDimentions()
 }
 
 
-function pushToTrace(x, y) {
+function pushToTrace(x, y, point) {
   if (!drawTrace)
     return;
-  if (traceHistory.length == 0) {
-    traceHistory.push([x, y]);
+  if (!traceHistory[point]) {
+    traceHistory[point] = [[x, y]];
   } else {
     // only add point if it's far enough than previous point
-    var lastPoint = traceHistory[traceHistory.length - 1]
+    var lastPoint = traceHistory[point][traceHistory[point].length - 1]
     var dist = Math.sqrt((lastPoint[0] - x) ** 2 + (lastPoint[1] - y) ** 2);
     if (dist > 0.01) {
-      traceHistory.push([x, y]);
+      traceHistory[point].push([x, y]);
     }
   }
-  if (traceHistory.length > 5000) {
-    traceHistory.shift();
+  if (traceHistory[point].length > 5000) {
+    traceHistory[point].shift();
+  }
+}
+
+function pushLineToTrace(x1, y1, x2, y2, edge) {
+  if (!drawTrace)
+    return;
+  if (!traceHistoryEdges[edge]) {
+    traceHistoryEdges[edge] = [[x1, y1, x2, y2]];
+  } else {
+    // only add edge if it's far enough than previous point
+    var lastEdge = traceHistoryEdges[edge][traceHistoryEdges[edge].length - 1]
+    var dist1 = Math.sqrt((lastEdge[0] - x1) ** 2 + (lastEdge[1] - y1) ** 2);
+    var dist2 = Math.sqrt((lastEdge[2] - x2) ** 2 + (lastEdge[3] - y2) ** 2);
+    if (dist1 > 0.01 || dist2 > 0.01) {
+      traceHistoryEdges[edge].push([x1, y1, x2, y2]);
+    }
+  }
+  if (traceHistoryEdges[edge].length > 5000) {
+    traceHistoryEdges[edge].shift();
   }
 }
 
@@ -159,7 +179,6 @@ function createPhysicsWorld() {
 
     var bodyDef = new b2BodyDef;
 
-    // for (var i=data.length-1; i>=0; i--)
     for (var i=0; i<data.points.length; i++)
     {
 
@@ -190,19 +209,6 @@ function createPhysicsWorld() {
 
     for (var i=0; i<data.edges.length; i++)
     {
-        // fixDef.shape = new b2PolygonShape;
-        // fixDef.shape.SetAsEdge(new b2Vec2(0, 0),
-        //                         new b2Vec2(data.points[data.edges[i][1]][0]-data.points[data.edges[i][0]][0],
-        //                                     data.points[data.edges[i][1]][1]-data.points[data.edges[i][0]][1]));
-        // bodyDef.position.x = data.points[data.edges[i][0]][0];
-        // bodyDef.position.y = data.points[data.edges[i][0]][1];
-        // var bod = world.CreateBody(bodyDef);
-        // bod.CreateFixture(fixDef);
-        // revJointDef.Initialize(bod, bodies[data.edges[i][0]], bodies[data.edges[i][0]].GetWorldCenter());
-        // j = world.CreateJoint(revJointDef);
-        // revJointDef.Initialize(bod, bodies[data.edges[i][1]], bodies[data.edges[i][1]].GetWorldCenter());
-        // j = world.CreateJoint(revJointDef);
-
         distJointDef.Initialize(bodies[data.edges[i][0]],
             bodies[data.edges[i][1]],
             bodies[data.edges[i][0]].GetWorldCenter(),
@@ -213,7 +219,8 @@ function createPhysicsWorld() {
 }
 
 function initProcessLinesAndPoints() {
-    traceHistory = [];
+    traceHistory = {};
+    traceHistoryEdges = {};
     lines = {};
     // console.log(data);
     for (var i=0; i<data.edges.length; i++)
@@ -264,14 +271,17 @@ function hasLine(l) {
         return lines[l[1]+" "+l[0]] !== undefined;
 }
 
-function addLine(l) {
+function addLine(l, drawLine) {
     if (hasLine(l))
         return;
-    if (l[0] < l[1])
+    if (l[0] < l[1]) {
         lines[l[0]+" "+l[1]] = data.edges.length;
-    else
+    } else {
         lines[l[1]+" "+l[0]] = data.edges.length;
+    }
+    drawLines[data.edges.length] = true;
     data.edges.push([l[0],l[1]]);
+
 }
 
 function removeLine(l) {
@@ -288,6 +298,10 @@ function removeLine(l) {
         index = lines[l[1]+" "+l[0]];
         lines[l[0]+" "+l[1]] = false;
         delete lines[l[1]+" "+l[0]];
+    }
+
+    if (drawLines[index]) {
+      delete drawLines[index];
     }
 
     if (index == data.edges.length-1)
@@ -328,6 +342,7 @@ function renameLines(a, b) {
 }
 
 function removePoint(p) {
+    console.log("removePoint", p);
     var l;
     for (var x=0; x<data.points.length; x++)
     {
@@ -350,40 +365,8 @@ function removePoint(p) {
 }
 
 function initKempe(globals) {
-    var data1 =
-    {
-      points:
-        [
-            [0  ,   0 ,   'X'],
-            [0  ,   1 ,   'F'],
-            [2  ,   1 ,   'P']
-        ],
-      edges:
-        [
-            [0, 1,  1],
-            [1, 2,  2],
-        ]
-    };
-
-    var data2 =
-    {
-      points:
-        [
-            [0  ,   0   ,   true],
-            [0  ,   1 ,   false],
-            [1,   0   ,   false],
-            [1,   1 ,   false]
-        ],
-      edges:
-        [
-            [0, 1,  1],
-            [0, 2,  1],
-            [2, 3,  1],
-            [1, 3,  1],
-        ]
-    };
-
-    data = data1;
+    data = globals.data;
+    globals.resetData = JSON.parse(JSON.stringify(data));
 
     selected = false;
     dragging = false;
@@ -396,13 +379,7 @@ function initKempe(globals) {
     lastpos = [0,0];
     line_start = false;
     line_end = [0,0];
-
-    if (equationCurve)
-        data = data2;
-    else
-        data = data1;
-
-    globals.data = data;
+    drawLines = globals.drawLines; // TODO: load lines from FOLD
 
     initProcessLinesAndPoints();
 }
@@ -421,6 +398,16 @@ function setFoldData(globals, fold) {
     data.edges.push([fold.edges_vertices[i][0], fold.edges_vertices[i][1], fold.edges_length[i]]);
   }
 
+
+  drawLines = {};
+  if (fold.edges_assignment) {
+    for (var i = 0; i < fold.edges_assignment.length; i++) {
+      if (fold.edges_assignment[i] == "P") {
+        drawLines[i] = true;
+      }
+    }
+  }
+
   selected = false;
   dragging = false;
   highlight = false;
@@ -434,6 +421,8 @@ function setFoldData(globals, fold) {
   line_end = [0,0];
 
   globals.data = data;
+  globals.drawLines = drawLines;
+  globals.resetData = JSON.parse(JSON.stringify(globals.data));
 
   initProcessLinesAndPoints();
 }
@@ -442,39 +431,50 @@ function setFoldData(globals, fold) {
 var LINE_BORDER_WIDTH = 6;
 var LINE_WIDTH = 4;
 function draw() {
-    if (equationCurve)
-        dd = drawdata;
-    else
-        dd = data;
+    dd = data;
     if (window.innerWidth !== last_doc_width)
         recalcViewDimentions();
 
     ctx.fillStyle = 'white'
     ctx.fillRect(0, 0, VIEW_WIDTH, VIEW_HEIGHT);
 
-    // i moved this before because i don't think we want to trace over the linkage
-    // is there a way to make the trace not do that original jump at the very start
-    if (traceHistory.length) {
-      ctx.lineWidth = 3;
+    // draw pen lines
+    for (var e in traceHistoryEdges) {
+      ctx.lineWidth = 5;
+      ctx.fillStyle = 'red';
+      ctx.beginPath();
+      // relative positions because trace should move when we move the linkage
+      ctx.moveTo(cx + sx*traceHistoryEdges[e][0][0], cy + sy*traceHistoryEdges[e][0][1]);
+      for (var i = 1; i < traceHistoryEdges[e].length; i++) {
+        ctx.lineTo(cx + sx*traceHistoryEdges[e][i][0], cy + sy*traceHistoryEdges[e][i][1]);
+      }
+      ctx.lineTo(cx + sx*traceHistoryEdges[e][traceHistoryEdges[e].length-1][2], cy + sy*traceHistoryEdges[e][traceHistoryEdges[e].length-1][3]);
+      for (var i = traceHistoryEdges[e].length - 2; i >= 0; i--) {
+        ctx.lineTo(cx + sx*traceHistoryEdges[e][i][2], cy + sy*traceHistoryEdges[e][i][3]);
+      }
+      ctx.closePath();
+      ctx.fill();
+    }
+
+    // draw pen points
+    for (var p in traceHistory) {
+      ctx.lineWidth = 5;
       ctx.strokeStyle = 'red';
       ctx.beginPath();
       // relative positions because trace should move when we move the linkage
-      ctx.moveTo(cx + sx*traceHistory[0][0], cy + sy*traceHistory[0][1]);
-      for (var i = 1; i < traceHistory.length; i++) {
-        ctx.lineTo(cx + sx*traceHistory[i][0], cy + sy*traceHistory[i][1])
+      ctx.moveTo(cx + sx*traceHistory[p][0][0], cy + sy*traceHistory[p][0][1]);
+      for (var i = 1; i < traceHistory[p].length; i++) {
+        ctx.lineTo(cx + sx*traceHistory[p][i][0], cy + sy*traceHistory[p][i][1])
       }
       ctx.stroke();
     }
 
-    ctx.fillStyle = 'blue';
-    ctx.strokeStyle = 'blue';
-    if (equationCurve)
-    {
-        ctx.fillStyle = '#8888ff';
-        ctx.strokeStyle = '#8888ff';
+    if (!showLinkage) {
+      return;
     }
 
-
+    ctx.fillStyle = 'blue';
+    ctx.strokeStyle = 'blue';
     for (var i=0; i<dd.edges.length; i++)
     {
         ctx.lineWidth = LINE_BORDER_WIDTH;
@@ -485,15 +485,21 @@ function draw() {
         ctx.closePath();
         ctx.stroke();
         ctx.lineWidth = LINE_WIDTH;
-        if (equationCurve)
-            ctx.strokeStyle = '#8888ff';
-        else
-            ctx.strokeStyle = '#ec008b';
+        if (drawLines[i]) {
+          ctx.strokeStyle = '#40E0D0';
+          if (!edit_mode) {
+            pushLineToTrace(dd.points[dd.edges[i][0]][0], dd.points[dd.edges[i][0]][1], dd.points[dd.edges[i][1]][0], dd.points[dd.edges[i][1]][1], i);
+          }
+        } else {
+          ctx.strokeStyle = '#ec008b';
+        }
         ctx.beginPath();
         ctx.moveTo(cx+sx*dd.points[dd.edges[i][0]][0],cy+sy*dd.points[dd.edges[i][0]][1]);
         ctx.lineTo(cx+sx*dd.points[dd.edges[i][1]][0],cy+sy*dd.points[dd.edges[i][1]][1]);
         ctx.closePath();
         ctx.stroke();
+
+
     }
 
     if (line_start)
@@ -531,7 +537,7 @@ function draw() {
 
     for (var i=dd.points.length-1; i>=0; i--)
     {
-        if (!equationCurve && (selected == i+1 || highlight == i+1 || line_start == i+1)) {
+        if (selected == i+1 || highlight == i+1 || line_start == i+1) {
             ctx.fillStyle = '#888888';
          } else {
             if (dd.points[i][2] == 'X') {
@@ -539,14 +545,7 @@ function draw() {
             } else if (dd.points[i][2] == 'P') {
                 ctx.fillStyle = '#40E0D0';
             } else {
-                if (equationCurve) {
-                    var cccc = fakecolor[""+i];
-                    if (cccc == undefined)
-                        ctx.fillStyle = '#8888ff';//'blue';
-                    else ctx.fillStyle = cccc;
-                } else {
-                  ctx.fillStyle = 'blue';
-                }
+                ctx.fillStyle = 'blue';
             }
         }
         ctx.lineWidth = 1;
@@ -560,104 +559,7 @@ function draw() {
         ctx.stroke();
 
         if (!edit_mode && dd.points[i][2] == 'P')
-          pushToTrace(dd.points[i][0], dd.points[i][1]);
-    }
-
-    if (equationCurve)
-    {
-        if (drawdata.hasOwnProperty("finalPoints"))
-            for (var i=0; i<drawdata.finalPoints.length; i++)
-            {
-                ctx.fillStyle = fakecolor[""+drawdata.finalPoints[i]];
-
-                ctx.lineWidth = 1;
-                ctx.strokeStyle = 'black';
-                ctx.beginPath();
-                ctx.arc((cx+sx*dd.points[drawdata.finalPoints[i]][0]),
-                        (cy+sy*dd.points[drawdata.finalPoints[i]][1]),
-                        RADIUS/2, 0, Math.PI*2, true);
-                ctx.closePath();
-                ctx.fill();
-                ctx.stroke();
-            }
-
-        ctx.fillStyle = 'brown';
-        ctx.lineWidth = 1;
-        ctx.strokeStyle = 'black';
-        ctx.beginPath();
-        ctx.arc((cx+sx*dd.points[dd.points.length-2][0]),
-                (cy+sy*dd.points[dd.points.length-2][1]),
-                RADIUS/2, 0, Math.PI*2, true);
-        ctx.closePath();
-        ctx.fill();
-        ctx.stroke();
-
-        for (var i=0; i<data.edges.length; i++)
-        {
-            ctx.lineWidth = LINE_BORDER_WIDTH;
-            ctx.strokeStyle = 'black';
-            ctx.beginPath();
-            ctx.moveTo(cx+sx*data.points[data.edges[i][0]][0],cy+sy*data.points[data.edges[i][0]][1]);
-            ctx.lineTo(cx+sx*data.points[data.edges[i][1]][0],cy+sy*data.points[data.edges[i][1]][1]);
-            ctx.closePath();
-            ctx.stroke();
-            ctx.lineWidth = LINE_WIDTH;
-            ctx.strokeStyle = 'blue';
-            ctx.beginPath();
-            ctx.moveTo(cx+sx*data.points[data.edges[i][0]][0],cy+sy*data.points[data.edges[i][0]][1]);
-            ctx.lineTo(cx+sx*data.points[data.edges[i][1]][0],cy+sy*data.points[data.edges[i][1]][1]);
-            ctx.closePath();
-            ctx.stroke();
-        }
-
-        for (var i=0; i<data.points.length; i++)
-        {
-
-            if (selected == i+1 || highlight == i+1 || line_start == i+1)
-            {
-                if (data.points[i][2] == 'X')
-                {
-                    ctx.fillStyle = '#FF8888'
-                }
-                else
-                {
-                    ctx.fillStyle = '#88FF88';
-                }
-
-
-             }
-             else
-             {
-                if (data.points[i][2] == 'X')
-                    ctx.fillStyle = 'red'
-                else
-                {
-                    if (i==0)
-                        ctx.fillStyle = 'red';
-                    else if (i==1)
-                        ctx.fillStyle = Colors.rgb2hex(43, 145, 250);
-                    else if (i==2)
-                        ctx.fillStyle = Colors.rgb2hex(250, 145, 43);
-                    else {
-                        ctx.fillStyle = 'green';
-                    }
-                }
-            }
-
-            if (i == 3) { // there's no comments on the original code but i think i==3 means that its the drawing vertex
-              pushToTrace(data.points[i][0], data.points[i][1]);
-            }
-
-            ctx.lineWidth = 1;
-            ctx.strokeStyle = 'black';
-            ctx.beginPath();
-            ctx.arc((cx+sx*data.points[i][0]),
-                    (cy+sy*data.points[i][1]),
-                    RADIUS/2, 0, Math.PI*2, true);
-            ctx.closePath();
-            ctx.fill();
-            ctx.stroke();
-        }
+          pushToTrace(dd.points[i][0], dd.points[i][1], i);
     }
 }
 
@@ -665,15 +567,6 @@ function toggleEditMode() {
     edit_mode = !edit_mode;
     if (!edit_mode)
         initProcessLinesAndPoints();
-}
-
-function togglePhysicsMode() {
-    var isedit = edit_mode;
-    if (!isedit)
-        toggleEditMode();
-    BOX2DPHYSICS = !BOX2DPHYSICS;
-    if (!isedit)
-        toggleEditMode();
 }
 
 function figureAngles(a, b) {
@@ -691,15 +584,25 @@ function figureAngles(a, b) {
 
 var count = 0;
 function update() {
-    if (!edit_mode && USEPHYSICS)
+    if (!edit_mode)
     {
-        if (equationCurve)
-        {
+        if (BOX2DPHYSICS) {
+            for (var i=0; i<bodies.length; i++)
+            {
+                var pos = bodies[i].GetPosition();
+                data.points[i][0] = pos.x;
+                data.points[i][1] = pos.y;
+                // console.log(pos);
+            }
+            world.Step(1 / 60, 10, 10);
+            world.ClearForces();
+        } else {
+            count++;
             if (selected)
             {
                 var dx = cmx-data.points[selected-1][0];
                 var dy = cmy-data.points[selected-1][1];
-                var forces = pgramForces(data, selected-1, dx, dy);
+                var forces = evalForces3(data, selected-1, dx, dy);
                 // RK4step(data, forces, 0.1);
                 timeStep(data, forces, 0.1);
                 // if (count<=10)
@@ -709,63 +612,18 @@ function update() {
                 var i = 0;
                 for (i=0; i<data.points.length; i++)
                     if (data.points[i][2] != 'X') break;
-                var forces = pgramForces(data, i, 0, 0);
+                var forces = evalForces3(data, i, 0, 0);
                 // RK4step(data, forces, 0.1);
                 timeStep(data, forces, 0.1);
                 // if (count<=10)
                 //     console.log(forces);
-            }
-            figureAngles(data.points[1], data.points[2]);
-            fakecolor = {};
-
-            if (!accuraterender)
-                drawdata = createOptimizedKempeLinkage(data.points[1], data.points[2],terms, fakecolor, anglea, angleb);
-            else
-                drawdata = createKempeLinkage(normalize(data.points[1]),normalize(data.points[2]),terms, anglea, angleb);
-
-
-        } else
-        {
-            if (BOX2DPHYSICS)
-            {
-                for (var i=0; i<bodies.length; i++)
-                {
-                    var pos = bodies[i].GetPosition();
-                    data.points[i][0] = pos.x;
-                    data.points[i][1] = pos.y;
-                    // console.log(pos);
-                }
-                world.Step(1 / 60, 10, 10);
-                world.ClearForces();
-            } else
-            {
-                count++;
-                if (selected)
-                {
-                    var dx = cmx-data.points[selected-1][0];
-                    var dy = cmy-data.points[selected-1][1];
-                    var forces = evalForces3(data, selected-1, dx, dy);
-                    // RK4step(data, forces, 0.1);
-                    timeStep(data, forces, 0.1);
-                    // if (count<=10)
-                    //     console.log(forces);
-                } else
-                {
-                    var i = 0;
-                    for (i=0; i<data.points.length; i++)
-                        if (data.points[i][2] != 'X') break;
-                    var forces = evalForces3(data, i, 0, 0);
-                    // RK4step(data, forces, 0.1);
-                    timeStep(data, forces, 0.1);
-                    // if (count<=10)
-                    //     console.log(forces);
-                }
             }
         }
     }
 }
 
 function handleMouseClick(e) {
+    //console.log(currentKeysDown);
     if (edit_mode)
     {
         // ctrl
@@ -777,7 +635,7 @@ function handleMouseClick(e) {
             // shift
             if (currentKeysDown[16]) {
               pointType = 'X';
-            } else if (currentKeysDown[18]) { // alt
+            } else if (currentKeysDown[32]) { // space
               pointType = 'P';
             } else {
               pointType = 'F';
@@ -786,9 +644,10 @@ function handleMouseClick(e) {
             data.points.push([mx, my, pointType]);
 
             return;
-        } else if (currentKeysDown[18]) {
+        } else if (currentKeysDown[16] && currentKeysDown[18]) {
             var mx = (e.offsetX-cx)/sx;
             var my = (e.offsetY-cy)/sy;
+            console.log(mx, my);
             for (var i=0; i<data.points.length; i++)
             {
                 if ((Math.abs(data.points[i][0]-mx) <= RADIUS/2.0/sx) && (Math.abs(data.points[i][1]-my) <= RADIUS/2.0/Math.abs(sy)))
@@ -828,7 +687,9 @@ function handleMouseHover(e) {
             }
         } else if (highlight != false) {
             i = highlight-1;
-            if (!((Math.abs(data.points[i][0]-mx) <= RADIUS/2.0/sx) && (Math.abs(data.points[i][1]-my) <= RADIUS/2.0/Math.abs(sy))))
+            if (!data.points[i]) {
+                highlight = false;
+            } else if (!((Math.abs(data.points[i][0]-mx) <= RADIUS/2.0/sx) && (Math.abs(data.points[i][1]-my) <= RADIUS/2.0/Math.abs(sy))))
             {
                 highlight = false;
             }
@@ -1079,6 +940,7 @@ function handleMouseMove(e) {
 }
 
 function handleMouseUp(e) {
+    //console.log(currentKeysDown);
     if (edit_mode)
     {
         // ctrl
@@ -1111,10 +973,11 @@ function handleMouseUp(e) {
                     else
                         l = [endi-1, line_start-1];
 
-                    if (hasLine(l))
+                    if (hasLine(l)) {
                         removeLine(l);
-                    else
-                        addLine(l);
+                    } else {
+                        addLine(l, currentKeysDown[32]); // space
+                    }
                 }
             }
             line_start = false;
@@ -1238,22 +1101,14 @@ function updateEditMode(globals) {
 }
 
 function updatePhysicsMode(globals) {
-    var isedit = (globals.controlMode == "edit");
-    if (!isedit)
-        toggleEditMode();
     BOX2DPHYSICS = (globals.physicsEngine == "box2d");
-    if (!isedit)
-        toggleEditMode();
 }
 
-var inputtextbox;
-function updateLinkage() {
-    if (!inputtextbox) inputtextbox = document.getElementById("input");
-    parent = createParent(1,1,1);
-    //document.write(JSON.stringify(parent));
-    var e3 = createEquation(input.value);
+function updateKempeLinkage(globals) {
+    var e3 = createEquation(globals.equation);
+    console.log(e3);
     equs = e3.genFuncs();
-    // console.log(equs);
+    console.log(equs);
     var e3e = e3.evalequ('x',createEquation("a+b"))
                             .evalequ('y',createEquation("c+d"));
     var cos = constructCosReporesentation(e3e);
@@ -1264,40 +1119,19 @@ function updateLinkage() {
     terms = cos;
     terms.splice(0,1);
     fakecolor = {};
-    drawdata = createOptimizedKempeLinkage([4,8],[8,4],terms, fakecolor);
+    // TODO: generate accurate linkage vs. optimized
     anglea = Math.atan2(8,4);
     angleb = Math.atan2(4,8);
-    console.log(drawdata.finalPoints);
+    drawdata = createKempeLinkage(normalize([4,8]),normalize([8,4]),terms, anglea, angleb);
+    console.log(drawdata);
     // mul = createKempeLinkage(1,1,terms);
     // data = mul;
     physicsInit(equs);
-    toggleEditMode();
-    toggleEditMode();
-    traceHistory = [];
-}
 
-function initlinkage() {
-    var e3 = createEquation("x^2-y+0.3");
-    equs = e3.genFuncs();
-    // console.log(equs);
-    var e3e = e3.evalequ('x',createEquation("a+b"))
-                            .evalequ('y',createEquation("c+d"));
-    var cos = constructCosReporesentation(e3e);
-    // output.value = strCos(cos);
-    // console.log(e3e);
-    // console.log(e3e.str());
-    console.log(strCos(cos));
-    terms = cos;
-    terms.splice(0,1);
-    fakecolor = {};
-    drawdata = createOptimizedKempeLinkage([4,8],[8,4],terms, fakecolor);
-    anglea = Math.atan2(8,4);
-    angleb = Math.atan2(4,8);
-    console.log(drawdata.finalPoints);
-    // mul = createKempeLinkage(1,1,terms);
-    // drawdata = createKempeLinkage(normalize([4,8]),normalize([8,4]),terms);
-    // data = mul;
-    physicsInit(equs);
-    toggleEditMode();
-    toggleEditMode();
+    //drawdata = createKempeLinkage(normalize([4,8]),normalize([8,4]), terms, anglea, angleb);
+
+    globals.data = drawdata;
+    data = drawdata;
+    equationCurve = true;
+    initKempe(globals);
 }

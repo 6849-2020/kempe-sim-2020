@@ -1,17 +1,11 @@
 //FIX FIND LINE, REFLECT
 
  function createParent(a,b,l){
-    var points = [[0,0,true],[a[0],a[1],false],[b[0],b[1],false],[a[0]+b[0],a[1]+b[1],false]];
+    var points = [[0,0,'X'],[a[0],a[1],'F'],[b[0],b[1],'F'],[a[0]+b[0],a[1]+b[1],'P']];
     var l = 4*Math.sqrt(5);
     var edges = [[0,1,l],[0,2,l],[1,3,l],[2,3,l]];
     return[points,edges];
  }
-// function createParent2(a,b,l){
-//     var points = [[0,0,true],[8,4,false],[4,8,false],[11,11,false]];
-//     var l = 4*Math.sqrt(5);
-//     var edges = [[0,1,l],[0,2,l],[1,3,l],[2,3,l]];
-//     return[points,edges];
-//  }
 
  /*
  INPUT: Terms in format alpha,beta,[c_1,ma_1,mb_1,d_1],
@@ -23,7 +17,7 @@ function createKempeLinkage(a,b,terms,anga,angb){
     var final_term_links = [];
     //Parent parallelogram p [[p_o,p_a,p_b,p_f],[o_a,o_b,a_f,b_f]
     var parent = createParent(a,b,1);
-    var linkage_pts = [parent[0][0], normalize(parent[0][1]).concat([false]), normalize(parent[0][2]).concat([false])];
+    var linkage_pts = [parent[0][0], normalize(parent[0][1]).concat(['F']), normalize(parent[0][2]).concat(['F'])];
     var linkage_edges = [] //parent[1];//.concat([1,3,1][2,3,1]);
     shift = 0;
     for (var i = 0; i < terms.length; i++){
@@ -50,12 +44,12 @@ function createKempeLinkage(a,b,terms,anga,angb){
         linkage_edges = linkage_edges.concat(shift_edges);
     }
 
-    root = [0,0,true];
+    root = [0,0,'X'];
     var ts = linkage_pts.length;
     pt1 = linkage_pts[final_term_links[0]];
     pt1_i = final_term_links[0];
     for( var l = 1; l < final_term_links.length; l++){
-        linkage_pts.push([0,0,false]);
+        linkage_pts.push([0,0,'F']);
         //alert(JSON.stringify(linkage_pts));
     }
 
@@ -72,13 +66,13 @@ function createKempeLinkage(a,b,terms,anga,angb){
             if(i == k){
                 //alert(JSON.stringify(linkage_pts));
                 var n_pt = findThirdPt(A,B,C);
-                linkage_pts[k-1+ts] = [n_pt[0],n_pt[1],false];
+                linkage_pts[k-1+ts] = [n_pt[0],n_pt[1],'F'];
                 linkage_edges.push([k-1+ts,i1,1],[k-1+ts,i2,1]);
             }
             else{
                 //alert(JSON.stringify(linkage_pts));
                 var n_pt = findThirdPt(A,B,C);
-                linkage_pts.push([n_pt[0],n_pt[1],false]);
+                linkage_pts.push([n_pt[0],n_pt[1],'F']);
                 linkage_edges.push([linkage_pts.length-1,i1,1],[linkage_pts.length-1,i2,1]);
                 A = n_pt;
                 i1 = linkage_pts.length-1;
@@ -108,7 +102,7 @@ function createKempeLinkage(a,b,terms,anga,angb){
         xx += linkage_pts[final_term_links[x]][0];
         yy += linkage_pts[final_term_links[x]][1];
     }
-    linkage_pts.push([xx,yy, false]);
+    linkage_pts.push([xx,yy, 'F']);
     // fakecolor[""+(pts.length-1)] = 'black';
 
     return {points: linkage_pts, edges: linkage_edges};
@@ -116,8 +110,8 @@ function createKempeLinkage(a,b,terms,anga,angb){
 
 function createOptimizedKempeLinkage(a, b, terms, fakecolor, anglea, angleb)
 {
-    var pts = [[0,0,true], normalize(a).concat(false), normalize(b).concat(false),
-        [1,0,true], [2,0,true], [4,0,true]];
+    var pts = [[0,0,"X"], normalize(a).concat('F'), normalize(b).concat('F'),
+        [1,0,'X'], [2,0,'X'], [4,0,'X']];
     var lines = [[0,1],[0,2]];
     var maxa = 0; var mina = 0;
     var maxb = 0; var minb = 0;
@@ -357,7 +351,7 @@ function createOptimizedKempeLinkage(a, b, terms, fakecolor, anglea, angleb)
             {
                 var tang = Math.atan2(pts[bindex][1], pts[bindex][0]);
                 tang += terms[ii][3];
-                pts.push([Math.cos(tang), Math.sin(tang), false]);
+                pts.push([Math.cos(tang), Math.sin(tang), 'F']);
                 lines.push([0, pts.length-1]);
                 lines.push([bindex, pts.length-1]);
                 bindex = pts.length-1;
@@ -365,7 +359,7 @@ function createOptimizedKempeLinkage(a, b, terms, fakecolor, anglea, angleb)
             if (terms[ii][0] != 1)
             {
                 var ap = pts[bindex];
-                pts.push([ap[0]*terms[ii][0], ap[1]*terms[ii][0], false]);
+                pts.push([ap[0]*terms[ii][0], ap[1]*terms[ii][0], 'F']);
                 lines.push([0, pts.length-1]);
                 lines.push([bindex, pts.length-1]);
                 bindex = pts.length-1;
@@ -381,7 +375,7 @@ function createOptimizedKempeLinkage(a, b, terms, fakecolor, anglea, angleb)
             {
                 var tang = Math.atan2(pts[aindex][1], pts[aindex][0]);
                 tang += terms[ii][3];
-                pts.push([Math.cos(tang), Math.sin(tang), false]);
+                pts.push([Math.cos(tang), Math.sin(tang), 'F']);
                 lines.push([0, pts.length-1]);
                 lines.push([aindex, pts.length-1]);
                 aindex = pts.length-1;
@@ -389,7 +383,7 @@ function createOptimizedKempeLinkage(a, b, terms, fakecolor, anglea, angleb)
             if (terms[ii][0] != 1)
             {
                 var ap = pts[aindex];
-                pts.push([ap[0]*terms[ii][0], ap[1]*terms[ii][0], false]);
+                pts.push([ap[0]*terms[ii][0], ap[1]*terms[ii][0], 'F']);
                 lines.push([0, pts.length-1]);
                 lines.push([aindex, pts.length-1]);
                 aindex = pts.length-1;
@@ -444,12 +438,12 @@ function createOptimizedKempeLinkage(a, b, terms, fakecolor, anglea, angleb)
         }
     }
 
-    var root = [0,0,true];
+    var root = [0,0,'X'];
     var ts = pts.length;
     var pt1 = pts[finalpts[0]];
     var pt1_i = finalpts[0];
     for( var l = 1; l < finalpts.length; l++){
-        pts.push([0,0,false]);
+        pts.push([0,0,'F']);
         //alert(JSON.stringify(pts));
     }
 
@@ -468,13 +462,13 @@ function createOptimizedKempeLinkage(a, b, terms, fakecolor, anglea, angleb)
             if(i == k){
                 //alert(JSON.stringify(pts));
                 var n_pt = findThirdPt(A,B,C);
-                pts[k-1+ts] = [n_pt[0],n_pt[1],false];
+                pts[k-1+ts] = [n_pt[0],n_pt[1],'F'];
                 lines.push([k-1+ts,i1,1],[k-1+ts,i2,1]);
             }
             else{
                 //alert(JSON.stringify(pts));
                 var n_pt = findThirdPt(A,B,C);
-                pts.push([n_pt[0],n_pt[1],false]);
+                pts.push([n_pt[0],n_pt[1],'F']);
                 lines.push([pts.length-1,i1,1],[pts.length-1,i2,1]);
                 A = n_pt;
                 i1 = pts.length-1;
@@ -493,17 +487,19 @@ function createOptimizedKempeLinkage(a, b, terms, fakecolor, anglea, angleb)
         xx += pts[finalpts[x]][0];
         yy += pts[finalpts[x]][1];
     }
-    pts.push([xx,yy, false]);
+    pts.push([xx,yy, 'F']);
     fakecolor[""+(pts.length-1)] = 'brown';
 
     for (var i=0; i<finalpts.length; i++)
         fakecolor[""+finalpts[i]] = Colors.rgb2hex(160, 180, 78)
 
-    pts.push([pts[1][0]+pts[2][0], pts[1][1]+pts[2][1], false]);
+    pts.push([pts[1][0]+pts[2][0], pts[1][1]+pts[2][1], 'F']);
     lines.push([1,pts.length-1]);
     lines.push([2,pts.length-1]);
 
     fakecolor[""+(pts.length-1)] = 'green';
+
+    pts[3][2] = 'P';
 
     return {points: pts, edges: lines, finalPoints: finalpts};
 }
@@ -536,21 +532,21 @@ function createOptimizedMultiplier(pp, max, min)
             // special implementation for first one
             if (i==2)
             {
-                pts.push([Math.cos(cang1), Math.sin(cang1), false]);
+                pts.push([Math.cos(cang1), Math.sin(cang1), 'F']);
                 keypointspos.push(pts.length-1+5);
-                pts.push([Math.cos(cang2)*2, Math.sin(cang2)*2, false]);
+                pts.push([Math.cos(cang2)*2, Math.sin(cang2)*2, 'F']);
 
                 pl = pts[pts.length-2];
                 pl2 = pts[pts.length-1];
                 p = reflect(pl[0]+pl2[0], pl[1]+pl2[1], pl[0], pl[1], pl2[0], pl2[1]);
-                pts.push([p[0], p[1], false]);
+                pts.push([p[0], p[1], 'F']);
 
-                pts.push([Math.cos(cang3)*4, Math.sin(cang3)*4, true]);
+                pts.push([Math.cos(cang3)*4, Math.sin(cang3)*4, 'X']);
 
                 pl = pts[pts.length-3];
                 pl2 = pts[pts.length-1];
                 p = reflect(pl[0]+pl2[0], pl[1]+pl2[1], pl[0], pl[1], pl2[0], pl2[1]);
-                pts.push([p[0], p[1], false]);
+                pts.push([p[0], p[1], 'F']);
 
                 ind = 5*(i-1);
                 edges.push([0, ind]);
@@ -564,21 +560,21 @@ function createOptimizedMultiplier(pp, max, min)
                 toremove.push(3);
             } else
             {
-                pts.push([Math.cos(cang1), Math.sin(cang1), false]);
+                pts.push([Math.cos(cang1), Math.sin(cang1), 'F']);
                 keypointspos.push(pts.length-1+5);
-                pts.push([Math.cos(cang2)*2, Math.sin(cang2)*2, false]);
+                pts.push([Math.cos(cang2)*2, Math.sin(cang2)*2, 'F']);
 
                 pl = pts[pts.length-2];
                 pl2 = pts[pts.length-1];
                 p = reflect(pl[0]+pl2[0], pl[1]+pl2[1], pl[0], pl[1], pl2[0], pl2[1]);
-                pts.push([p[0], p[1], false]);
+                pts.push([p[0], p[1], 'F']);
 
-                pts.push([Math.cos(cang3)*4, Math.sin(cang3)*4, false]);
+                pts.push([Math.cos(cang3)*4, Math.sin(cang3)*4, 'F']);
 
                 pl = pts[pts.length-3];
                 pl2 = pts[pts.length-1];
                 p = reflect(pl[0]+pl2[0], pl[1]+pl2[1], pl[0], pl[1], pl2[0], pl2[1]);
-                pts.push([p[0], p[1], false]);
+                pts.push([p[0], p[1], 'F']);
 
                 ind = 5*(i-1);
                 edges.push([0,      ind]);
@@ -608,24 +604,24 @@ function createOptimizedMultiplier(pp, max, min)
             // special implementation for first two
             if (i==-1)
             {
-                pts.push([pp[0], pp[1], false]);
+                pts.push([pp[0], pp[1], 'F']);
                 toremove.push(pts.length-1);
-                pts.push([2, 0, true]);
+                pts.push([2, 0, 'X']);
                 toremove.push(pts.length-1);
 
                 pl = pts[pts.length-2];
                 pl2 = pts[pts.length-1];
                 p = reflect(pl[0]+pl2[0], pl[1]+pl2[1], pl[0], pl[1], pl2[0], pl2[1]);
-                pts.push([p[0], p[1], false]);
+                pts.push([p[0], p[1], 'F']);
 
 
-                pts.push([Math.cos(cang3)*4, Math.sin(cang3)*4, false]);
+                pts.push([Math.cos(cang3)*4, Math.sin(cang3)*4, 'F']);
                 keypointsneg.push(pts.length-1+5);
 
                 pl = pts[pts.length-3];
                 pl2 = pts[pts.length-1];
                 p = reflect(pl[0]+pl2[0], pl[1]+pl2[1], pl[0], pl[1], pl2[0], pl2[1]);
-                pts.push([p[0], p[1], false]);
+                pts.push([p[0], p[1], 'F']);
 
                 edges.push([1,  ind+2]);
                 edges.push([3,  ind+2]);
@@ -635,22 +631,22 @@ function createOptimizedMultiplier(pp, max, min)
                 edges.push([ind+3,  ind+4]);
             } else if (i == -2)
             {
-                pts.push([Math.cos(cang1), Math.sin(cang1), false]);
+                pts.push([Math.cos(cang1), Math.sin(cang1), 'F']);
                 toremove.push(pts.length-1);
-                pts.push([Math.cos(cang2)*2, Math.sin(cang2)*2, false]);
+                pts.push([Math.cos(cang2)*2, Math.sin(cang2)*2, 'F']);
 
                 pl = pts[pts.length-2];
                 pl2 = pts[pts.length-1];
                 p = reflect(pl[0]+pl2[0], pl[1]+pl2[1], pl[0], pl[1], pl2[0], pl2[1]);
-                pts.push([p[0], p[1], false]);
+                pts.push([p[0], p[1], 'F']);
 
-                pts.push([Math.cos(cang3)*4, Math.sin(cang3)*4, false]);
+                pts.push([Math.cos(cang3)*4, Math.sin(cang3)*4, 'F']);
                 keypointsneg.push(pts.length-1+5);
 
                 pl = pts[pts.length-3];
                 pl2 = pts[pts.length-1];
                 p = reflect(pl[0]+pl2[0], pl[1]+pl2[1], pl[0], pl[1], pl2[0], pl2[1]);
-                pts.push([p[0], p[1], false]);
+                pts.push([p[0], p[1], 'F']);
 
                 edges.push([0,      ind+1]);
                 edges.push([ind-2,  ind+1]);
@@ -663,21 +659,21 @@ function createOptimizedMultiplier(pp, max, min)
                 edges.push([ind+3,  ind+4]);
             } else
             {
-                pts.push([Math.cos(cang1), Math.sin(cang1), false]);
-                pts.push([Math.cos(cang2)*2, Math.sin(cang2)*2, false]);
+                pts.push([Math.cos(cang1), Math.sin(cang1), 'F']);
+                pts.push([Math.cos(cang2)*2, Math.sin(cang2)*2, 'F']);
 
                 pl = pts[pts.length-2];
                 pl2 = pts[pts.length-1];
                 p = reflect(pl[0]+pl2[0], pl[1]+pl2[1], pl[0], pl[1], pl2[0], pl2[1]);
-                pts.push([p[0], p[1], false]);
+                pts.push([p[0], p[1], 'F']);
 
-                pts.push([Math.cos(cang3)*4, Math.sin(cang3)*4, false]);
+                pts.push([Math.cos(cang3)*4, Math.sin(cang3)*4, 'F']);
                 keypointsneg.push(pts.length-1+5);
 
                 pl = pts[pts.length-3];
                 pl2 = pts[pts.length-1];
                 p = reflect(pl[0]+pl2[0], pl[1]+pl2[1], pl[0], pl[1], pl2[0], pl2[1]);
-                pts.push([p[0], p[1], false]);
+                pts.push([p[0], p[1], 'F']);
 
                 edges.push([0,      ind]);
                 edges.push([0,      ind+1]);
@@ -700,14 +696,14 @@ function createOptimizedMultiplier(pp, max, min)
         if (i==keypointsneg.length)
         {
             var cang1 = ang*(-i);
-            pts.push([Math.cos(cang1), Math.sin(cang1), false]);
+            pts.push([Math.cos(cang1), Math.sin(cang1), 'F']);
             edges.push([0, pts.length-1+5]);
             edges.push([keypointsneg[i-1], pts.length-1+5]);
             keypointsneg[i-1] = pts.length-1+5;
         } else if (i==keypointsneg.length-1)
         {
             var cang1 = ang*(-i);
-            pts.push([Math.cos(cang1), Math.sin(cang1), false]);
+            pts.push([Math.cos(cang1), Math.sin(cang1), 'F']);
             edges.push([0, pts.length-1+5]);
             edges.push([keypointsneg[i-1]+3, pts.length-1+5]);
             keypointsneg[i-1] = pts.length-1+5;
@@ -731,12 +727,12 @@ function createPLinkage(x, y, l)
 {
     var r = l/3.0;
     pts = [
-        [x-3*r, y, true],
-        [x-2*r, y, true],
-        [x-r, y, false],
-        [x-r/2, y+r*1.5, false],
-        [x-r/2, y-r*1.5, false],
-        [x, y, false]
+        [x-3*r, y, 'X'],
+        [x-2*r, y, 'X'],
+        [x-r, y, 'F'],
+        [x-r/2, y+r*1.5, 'F'],
+        [x-r/2, y-r*1.5, 'F'],
+        [x, y, 'F']
         ];
     lns = [
         [1,2],
@@ -890,9 +886,9 @@ function createMLinkage(n,p1,p2,l){
         return[[p1,normalize(p2)],[[0,1,1]]];
     }
     //Anchor contra-parallelogram
-    var m_1 = [2.0*l,0.0,true];
+    var m_1 = [2.0*l,0.0,'X'];
     var n_1 = reflect(p2[0]+2.0*l, p2[1], p2[0], p2[1], 2.0*l, 0.0);
-    n_1.push(false);
+    n_1.push('F');
 
     pts = pts.concat([p1,p2,m_1,n_1]);
 
@@ -943,7 +939,7 @@ function createMLinkage(n,p1,p2,l){
 
     var lastpoint = pts[pts.length-1];
     var ll = Math.sqrt((lastpoint[0]-p1[0])*(lastpoint[0]-p1[0])+(lastpoint[1]-p1[1])*(lastpoint[1]-p1[1]));
-    lastpoint = [(lastpoint[0]-p1[0])/ll+p1[0], (lastpoint[1]-p1[1])/ll+p1[1],false];
+    lastpoint = [(lastpoint[0]-p1[0])/ll+p1[0], (lastpoint[1]-p1[1])/ll+p1[1],'F'];
     pts.push(lastpoint);
     edges.push([0, pts.length-1]);
     edges.push([pts.length-2,pts.length-1]);
@@ -963,14 +959,14 @@ function mulContraPara(p1,p2,l){
     var nx2 = x1 + (x2-x1)*(1/4.0);
     var ny2 = y1 + (y2-y1)*(1/4.0);
 
-    var np2 = [nx2,ny2,false];
+    var np2 = [nx2,ny2,'F'];
 
     //Locate other anchor point
     var nx1 = nx2 - x1;
     var ny1 = ny2 - y1;
 
     var np1 = reflect(nx1, ny1, 0, 0, nx2, ny2);
-    np1.push(false);
+    np1.push('F');
     return [np2,np1];
 }
 
@@ -998,17 +994,17 @@ function createALinkage(root, p1, p2, angle, length, term, anga, angb)
     mp = [Math.cos(ang), Math.sin(ang)];
 
     var pts = [
-                [root[0], root[1], false],
-                [p1[0], p1[1], false],
-                [p2[0], p2[1], false]
+                [root[0], root[1], 'F'],
+                [p1[0], p1[1], 'F'],
+                [p2[0], p2[1], 'F']
                 ];
     var edges = [
                     [0, 1],
                     [0, 2],
                 ];
 
-    var np1 = [p1[0]*2.0, p1[1]*2.0, false];
-    var np2 = [p2[0]/2.0, p2[1]/2.0, false];
+    var np1 = [p1[0]*2.0, p1[1]*2.0, 'F'];
+    var np2 = [p2[0]/2.0, p2[1]/2.0, 'F'];
     pts.push(np1);
     pts.push(np2);
     edges.push([0,3]);
@@ -1016,42 +1012,42 @@ function createALinkage(root, p1, p2, angle, length, term, anga, angb)
     edges.push([0,4]);
     edges.push([2,4]);
 
-    pts.push([mp[0],mp[1],false]);
+    pts.push([mp[0],mp[1],'F']);
     edges.push([0,5]);
 
-    var np3 = [np1[0]+mp[0], np1[1]+mp[1], false];
+    var np3 = [np1[0]+mp[0], np1[1]+mp[1], 'F'];
     np3 = reflect(np3[0], np3[1], mp[0], mp[1], np1[0], np1[1]);
-    np3.push(false);
+    np3.push('F');
     pts.push(np3);
     edges.push([3,6]);
     edges.push([5,6]);
 
-    var np4 = [(np3[0]-mp[0])*0.25+mp[0],(np3[1]-mp[1])*0.25+mp[1], false];
+    var np4 = [(np3[0]-mp[0])*0.25+mp[0],(np3[1]-mp[1])*0.25+mp[1], 'F'];
     pts.push(np4);
     edges.push([5,7]);
     edges.push([6,7]);
     edges.push([4,7]);
 
-    pts.push([2,0, true]);
+    pts.push([2,0, 'X']);
     var p9 = reflect(mp[0]+2, mp[1], mp[0], mp[1], 2, 0);
-    p9.push(false);
+    p9.push('F');
     pts.push(p9);
     edges.push([0,8]); // optional
     edges.push([8,9]);
     edges.push([5,9]);
 
-    pts.push([(p9[0]-mp[0])*0.25+mp[0], (p9[1]-mp[1])*0.25+mp[1], false]);
+    pts.push([(p9[0]-mp[0])*0.25+mp[0], (p9[1]-mp[1])*0.25+mp[1], 'F']);
     edges.push([9,10]);
     edges.push([5,10]);
 
     var p11 = reflect(pts[10][0]-pts[5][0], pts[10][1]-pts[5][1], 0, 0, pts[10][0], pts[10][1]);
-    p11.push(false);
+    p11.push('F');
     pts.push(p11);
     edges.push([0,11]);
     edges.push([10,11]);
 
     if(angle != 0){
-        var p12 = [p11[0]*Math.cos(angle)-p11[1]*Math.sin(angle), p11[0]*Math.sin(angle)+p11[1]*Math.cos(angle), false];
+        var p12 = [p11[0]*Math.cos(angle)-p11[1]*Math.sin(angle), p11[0]*Math.sin(angle)+p11[1]*Math.cos(angle), 'F'];
         pts.push(p12);
         edges.push([0,12]);
         edges.push([11,12]);
@@ -1059,7 +1055,7 @@ function createALinkage(root, p1, p2, angle, length, term, anga, angb)
 
     p_last = pts[pts.length-1];
     var p_lastlen = Math.sqrt(p_last[0]*p_last[0]+p_last[1]*p_last[1]);
-    pts.push([p_last[0]/p_lastlen*length, p_last[1]/p_lastlen*length, false]);
+    pts.push([p_last[0]/p_lastlen*length, p_last[1]/p_lastlen*length, 'F']);
 
     edges.push([0,pts.length-1]);
     edges.push([pts.length-2,pts.length-1]);
@@ -1090,9 +1086,6 @@ function perpendicular(ax, ay, x1, y1, x2, y2)
     return [x1+q*dx, y1+q*dy];
 }
 
-function bracePara(angle,n,p1,p2){
-}
-
 /*
 INPUT: four points of the ContraPara, l1, the length
 of the short side, l2 the length of the long side
@@ -1115,23 +1108,16 @@ function braceContraPara(a,b,c,d){
     var dy = R[1] - S[1];
     var norm = normalize([-dy,dx]);
     var start = midpoint(R,S);
-    var T = [start[0]+norm[0]*alt,start[1]+norm[1]*alt,false];
+    var T = [start[0]+norm[0]*alt,start[1]+norm[1]*alt,'F'];
     //alert(JSON.stringify(distance(a,b)));
     return [P,R,S,Q,T,r1,r2];
 
 }
 function midpoint(p1,p2){
-    return [0.5*(p1[0]+p2[0]),0.5*(p1[1]+p2[1]),false];
+    return [0.5*(p1[0]+p2[0]),0.5*(p1[1]+p2[1]),'F'];
 }
 function distance(p1,p2){
     var xdist = p1[0]-p2[0];
     var ydist = p1[1]-p2[1];
     return Math.sqrt(xdist*xdist+ydist*ydist);
 }
-// $(document).ready(function(){
-//     parent = createParent(1,1,1);
-//     //document.write(JSON.stringify(parent));
-//     params = [1,2,0,0];
-//     mul = createMLinkage(params[1], parent[0][0],parent[0][1],parent[1][0][2]);
-//     document.write(JSON.stringify(mul));
-// });

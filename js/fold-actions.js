@@ -99,6 +99,15 @@ function saveFOLD(globals) {
     edges_vertices.push([d.edges[i][0], d.edges[i][1]]);
   }
 
+  var edges_assignment = [];
+  for (var i = 0; i < d.edges.length; i++) {
+    if (globals.drawLines[i]) {
+      edges_assignment.push("P");
+    } else {
+      edges_assignment.push("F");
+    }
+  }
+
   var foldFile = {
     file_spec : 1.1,
     file_creator : "Kempe Simulator v0.1",
@@ -108,7 +117,8 @@ function saveFOLD(globals) {
     frame_attributes: ["2D"],
     vertices_coords : vertices_coords,
     "vertices_kempe:assignment" : vertices_assignment,
-    edges_vertices : edges_vertices
+    edges_vertices : edges_vertices,
+    edges_assignment : edges_assignment
   }
 
   if (globals.exportFoldEdgeLengths) {

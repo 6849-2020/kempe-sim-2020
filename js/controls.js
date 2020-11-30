@@ -13,7 +13,28 @@ function initControls(globals){
       $('#tipsModal').modal('show');
   });
 
+  setLink("#kempeLinkage", function(){
+      $('#kempeLinkageModal').modal('show');
+  });
+
+  setRadio("kempeRenderMode", globals.kempeRenderMode, function() {});
+
+  setLink("#doKempeLinkage", function(){
+      var equation = $("#kempeEquation").val();
+      globals.equation = equation;
+      updateKempeLinkage(globals);
+  });
+
+  setLink("#plLinkage", function(){
+      plLinkage(globals);
+  });
+
+  setLink("#cLinkage", function(){
+      multiplierLinkage(globals);
+  });
+
   setLink("#resetBottom", function() {
+    globals.data = JSON.parse(JSON.stringify(globals.resetData));
     initKempe(globals);
   });
 
@@ -75,7 +96,18 @@ function initControls(globals){
   }
   setRadio("controlMode", globals.controlMode, setControlMode);
 
-  setRadio("physicsEngine", globals.physicsEngine, function() { updatePhysicsMode(globals); } );
+  setRadio("physicsEngine", globals.physicsEngine, function(val) {
+    globals.physicsEngine = val;
+    updatePhysicsMode(globals);
+  } );
+
+  setLink("#viewLinkageDrawing", function() {
+    setViewMode("linkage_drawing");
+  });
+
+  setLink("#viewDrawing", function() {
+    setViewMode("drawing");
+  });
 
   function setLink(id, callback){
       $(id).click(function(e){
