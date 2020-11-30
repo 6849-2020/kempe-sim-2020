@@ -433,6 +433,7 @@ function setFoldData(globals, fold) {
 
 var LINE_BORDER_WIDTH = 6;
 var LINE_WIDTH = 4;
+var animate_dash = 0;
 function draw() {
     dd = data;
     if (window.innerWidth !== last_doc_width)
@@ -474,6 +475,38 @@ function draw() {
 
     if (!showLinkage) {
       return;
+    }
+
+
+    if (!edit_mode && selected) {
+      animate_dash += 0.5;
+      if (animate_dash > 16) animate_dash = 0;
+      ctx.lineWidth = 2;
+      ctx.strokeStyle = '#333333';
+      ctx.beginPath();
+      ctx.setLineDash([8, 8]);
+      ctx.lineDashOffset = -animate_dash;
+      var i =selected - 1;
+      ctx.moveTo(cx+sx*dd.points[i][0],cy+sy*dd.points[i][1]);
+      ctx.lineTo(cx+sx*cmx,cy+sy*cmy);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.lineDashOffset = 0;
+
+      // arrow
+      var tmp_x = dd.points[i][0] - cmx;
+      var tmp_y = dd.points[i][1] - cmy;
+      var L = Math.sqrt(tmp_x*tmp_x + tmp_y*tmp_y) * 10;
+      var x_left = Math.cos(30 * Math.PI / 180) * tmp_x - Math.sin(30 * Math.PI / 180) * tmp_y;
+      var y_left = Math.sin(30 * Math.PI / 180) * tmp_x + Math.cos(30 * Math.PI / 180) * tmp_y;
+      var x_right = Math.cos(-30 * Math.PI / 180) * tmp_x - Math.sin(-30 * Math.PI / 180) * tmp_y;
+      var y_right = Math.sin(-30 * Math.PI / 180) * tmp_x + Math.cos(-30 * Math.PI / 180) * tmp_y;
+
+      ctx.beginPath();
+      ctx.moveTo(cx+sx*(cmx + x_left/L),cy+sy*(cmy + y_left/L));
+      ctx.lineTo(cx+sx*cmx,cy+sy*cmy);
+      ctx.lineTo(cx+sx*(cmx + x_right/L),cy+sy*(cmy + y_right/L));
+      ctx.stroke();
     }
 
     ctx.fillStyle = 'blue';
@@ -564,6 +597,8 @@ function draw() {
         if (!edit_mode && dd.points[i][2] == 'P')
           pushToTrace(dd.points[i][0], dd.points[i][1], i);
     }
+
+
 }
 
 function toggleEditMode() {

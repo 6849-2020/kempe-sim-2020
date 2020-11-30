@@ -29,8 +29,9 @@ function initControls(globals){
       plLinkage(globals);
   });
 
-  setLink("#cLinkage", function(){
-      cLinkage(globals);
+  setLink(".fontLinkage", function(e){
+      var letter = $(e.target).data("id");
+      fontLinkage(globals, letter);
   });
 
   setLink("#emptyLinkage", function(){
