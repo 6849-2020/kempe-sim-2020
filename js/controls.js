@@ -30,7 +30,7 @@ function initControls(globals){
   });
 
   setLink("#cLinkage", function(){
-      multiplierLinkage(globals);
+      cLinkage(globals);
   });
 
   setLink("#resetBottom", function() {

@@ -69,6 +69,7 @@ function kempeStart(globals) {
     cvs.addEventListener('mousemove', handleMouseHover);
     cvs.addEventListener('mouseout', handleMouseOut);
     cvs.addEventListener('click', handleMouseClick);
+    cvs.addEventListener('auxclick', handleMouseAuxClick);
 
     recalcViewDimentions();
 
@@ -622,6 +623,27 @@ function update() {
     }
 }
 
+function handleMouseAuxClick(e) {
+  if (edit_mode && e.button == 1) {
+    var mx = (e.offsetX-cx)/sx;
+    var my = (e.offsetY-cy)/sy;
+    for (var i=0; i<data.points.length; i++)
+    {
+        if ((Math.abs(data.points[i][0]-mx) <= RADIUS/2.0/sx) && (Math.abs(data.points[i][1]-my) <= RADIUS/2.0/Math.abs(sy)))
+        {
+            if (data.points[i][2] == 'X') {
+              data.points[i][2] = 'F';
+            } else if (data.points[i][2] == 'F') {
+              data.points[i][2] = 'P';
+            } else if (data.points[i][2] == 'P') {
+              data.points[i][2] = 'X';
+            }
+            break;
+        }
+    }
+  }
+}
+
 function handleMouseClick(e) {
     //console.log(currentKeysDown);
     if (edit_mode)
@@ -647,7 +669,6 @@ function handleMouseClick(e) {
         } else if (currentKeysDown[16] && currentKeysDown[18]) {
             var mx = (e.offsetX-cx)/sx;
             var my = (e.offsetY-cy)/sy;
-            console.log(mx, my);
             for (var i=0; i<data.points.length; i++)
             {
                 if ((Math.abs(data.points[i][0]-mx) <= RADIUS/2.0/sx) && (Math.abs(data.points[i][1]-my) <= RADIUS/2.0/Math.abs(sy)))
