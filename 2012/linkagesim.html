@@ -1,0 +1,51 @@
+<html>
+<head>
+<title>Universal Linkage Simulation</title>
+<script type="text/javascript" src="Box2dWeb-2.1.a.3.js"></script>
+<script type="text/javascript" src="numeric-1.2.3.js"></script>
+<script type="text/javascript" src="cas.js"></script>
+<script type="text/javascript" src="physics.js"></script>
+<script type="text/javascript" src="kempe-linkage.js"></script>
+<script type="text/javascript" src="webgl-utils.js"></script>
+<script type="text/javascript" src="colors.min.js"></script>
+<script type="text/javascript" src="kempe.js"></script>
+
+</head>
+
+<body onload="kempeStart(false);">
+    <table border="0" width="100%">
+        <tr>
+            <td>
+                <canvas id="graphics-canvas" style="border: none;" width="500" height="500" />
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <input type="checkbox" id="checkboxeditMode" onchange="updateEditMode();" />Edit Mode
+
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <input type="checkbox" id="checkboxphysics" onchange="updatePhysicsMode();" />Use Box2D Physics
+            </td>
+        </tr>
+        
+        <!-- <tr>
+            <td>
+                <p id="error-display">
+                no errors
+                </p>
+            </td>
+            <td>
+                
+            </td>
+        </tr> -->
+    </table>
+    
+
+</body>
+
+
+</html>
+

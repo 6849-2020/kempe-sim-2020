@@ -4,7 +4,7 @@ function evalForces(data) {
     var f = new Array();
     var node;
 
-    var kdrag = 50;
+    var kdrag = 5;
     for (var i = 0; i < state.length; i++) {
         node = state[i];
 
@@ -21,7 +21,7 @@ function evalForces(data) {
     }
 
     //spring forces
-    var kspring = 1000;
+    var kspring = 500;
     for (var i = 0; i < edges.length; i++) {
         var edge = edges[i];
         var pt1 = state[edge[0]];
@@ -30,6 +30,7 @@ function evalForces(data) {
         var d = Math.sqrt(Math.pow(pt1[0]-pt2[0],2) + Math.pow(pt1[1] - pt2[1],2));
         var fx = kspring*(d - r) * (pt2[0] - pt1[0])/d;
         var fy = kspring*(d - r) * (pt2[1] - pt1[1])/d;
+        console.log(fx, fy);
 
         // add spring force to pt1
         f[edge[0]][3] += fx;

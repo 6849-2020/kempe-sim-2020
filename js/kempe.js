@@ -640,8 +640,10 @@ function update() {
             {
                 var dx = cmx-data.points[selected-1][0];
                 var dy = cmy-data.points[selected-1][1];
+                // data.points[selected-1][0] += 0.0001 * dx;
+                // data.points[selected-1][1] += 0.0001 * dy;
                 var forces = evalForces3(data, selected-1, dx, dy);
-                // RK4step(data, forces, 0.1);
+                //RK4step(data, forces, 0.1);
                 timeStep(data, forces, 0.1);
                 // if (count<=10)
                 //     console.log(forces);
