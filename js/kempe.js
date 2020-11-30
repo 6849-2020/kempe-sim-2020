@@ -477,12 +477,12 @@ function draw() {
       return;
     }
 
-
+    // draw forc arrow
     if (!edit_mode && selected) {
       animate_dash += 0.5;
       if (animate_dash > 16) animate_dash = 0;
-      ctx.lineWidth = 2;
-      ctx.strokeStyle = '#333333';
+      ctx.lineWidth = 1;
+      ctx.strokeStyle = '#888888';
       ctx.beginPath();
       ctx.setLineDash([8, 8]);
       ctx.lineDashOffset = -animate_dash;
@@ -496,7 +496,7 @@ function draw() {
       // arrow
       var tmp_x = dd.points[i][0] - cmx;
       var tmp_y = dd.points[i][1] - cmy;
-      var L = Math.sqrt(tmp_x*tmp_x + tmp_y*tmp_y) * 10;
+      var L = Math.sqrt(tmp_x*tmp_x + tmp_y*tmp_y) * 12;
       var x_left = Math.cos(30 * Math.PI / 180) * tmp_x - Math.sin(30 * Math.PI / 180) * tmp_y;
       var y_left = Math.sin(30 * Math.PI / 180) * tmp_x + Math.cos(30 * Math.PI / 180) * tmp_y;
       var x_right = Math.cos(-30 * Math.PI / 180) * tmp_x - Math.sin(-30 * Math.PI / 180) * tmp_y;

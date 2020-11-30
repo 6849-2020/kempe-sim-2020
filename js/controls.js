@@ -25,17 +25,9 @@ function initControls(globals){
       updateKempeLinkage(globals);
   });
 
-  setLink("#plLinkage", function(){
-      plLinkage(globals);
-  });
-
-  setLink(".fontLinkage", function(e){
-      var letter = $(e.target).data("id");
-      fontLinkage(globals, letter);
-  });
-
-  setLink("#emptyLinkage", function(){
-      emptyLinkage(globals);
+  setLink(".linkages", function(e){
+      var linkage = $(e.target).data("id");
+      LINKAGES[linkage](globals);
   });
 
   setLink("#resetBottom", function() {
