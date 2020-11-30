@@ -280,7 +280,9 @@ function addLine(l, drawLine) {
     } else {
         lines[l[1]+" "+l[0]] = data.edges.length;
     }
-    drawLines[data.edges.length] = true;
+    if (drawLine) {
+      drawLines[data.edges.length] = true;
+    }
     data.edges.push([l[0],l[1]]);
 
 }
@@ -666,7 +668,7 @@ function handleMouseClick(e) {
             data.points.push([mx, my, pointType]);
 
             return;
-        } else if (currentKeysDown[16] && currentKeysDown[18]) {
+        } else if (currentKeysDown[16] && e.altKey) {
             var mx = (e.offsetX-cx)/sx;
             var my = (e.offsetY-cy)/sy;
             for (var i=0; i<data.points.length; i++)
@@ -961,7 +963,7 @@ function handleMouseMove(e) {
 }
 
 function handleMouseUp(e) {
-    //console.log(currentKeysDown);
+    console.log(currentKeysDown);
     if (edit_mode)
     {
         // ctrl
@@ -1117,8 +1119,10 @@ function tick() {
 
 function updateEditMode(globals) {
     edit_mode = (globals.controlMode == "edit");
-    if (!edit_mode)
+    if (!edit_mode) {
+        globals.resetData = JSON.parse(JSON.stringify(data));
         initProcessLinesAndPoints();
+    }
 }
 
 function updatePhysicsMode(globals) {

@@ -33,6 +33,10 @@ function initControls(globals){
       cLinkage(globals);
   });
 
+  setLink("#emptyLinkage", function(){
+      emptyLinkage(globals);
+  });
+
   setLink("#resetBottom", function() {
     globals.data = JSON.parse(JSON.stringify(globals.resetData));
     initKempe(globals);
