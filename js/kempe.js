@@ -30,6 +30,7 @@ var drawLines = {};
 var equs;
 var world;
 var bodies;
+var joints;
 var mousejoint = null;
 var BOX2DPHYSICS = false;
 var equationCurve;
@@ -166,6 +167,7 @@ function createPhysicsWorld() {
        ,  true                 //allow sleep
     );
     bodies = [];
+    joints = [];
 
     var emptyvec = new b2Vec2();
 
@@ -193,17 +195,14 @@ function createPhysicsWorld() {
         bod.CreateFixture(fixDef);
 
         bodies.push(bod);
-        bod.m_angularDamping = 30.0;
-        bod.m_linearDamping = 30.0;
+        // bod.m_angularDamping = 30.0;
+        // bod.m_linearDamping = 30.0;
+        bod.m_angularDamping = 0;
+        bod.m_linearDamping = 0;
     }
 
     var distJointDef = new b2DistanceJointDef;
     distJointDef.collideConnected = false;
-    var revJointDef = new b2RevolveJointDef;
-    revJointDef.collideConnected = false;
-
-    // distJointDef.frequencyHz = 30;
-    // distJointDef.dampingRatio = 1;
 
     bodyDef.type = b2Body.b2_dynamicBody;
     var j;
@@ -214,8 +213,12 @@ function createPhysicsWorld() {
             bodies[data.edges[i][1]],
             bodies[data.edges[i][0]].GetWorldCenter(),
             bodies[data.edges[i][1]].GetWorldCenter());
+        // turn into a infinite spring
+        // distJointDef.frequencyHz = 0.5;
+        // distJointDef.dampingRatio = 0;
+        console.log(distJointDef);
         j = world.CreateJoint(distJointDef);
-
+        joints.push(j);
     }
 }
 
@@ -621,7 +624,9 @@ function figureAngles(a, b) {
 }
 
 var count = 0;
+var t = 0;
 function update() {
+    t += 0.1;
     if (!edit_mode)
     {
         if (BOX2DPHYSICS) {
@@ -631,6 +636,9 @@ function update() {
                 data.points[i][0] = pos.x;
                 data.points[i][1] = pos.y;
                 // console.log(pos);
+            }
+            for (var i = 0; i < joints.length; i++) {
+              joints[i].length += Math.cos(t) * 5;
             }
             world.Step(1 / 60, 10, 10);
             world.ClearForces();

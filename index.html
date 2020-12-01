@@ -68,7 +68,6 @@
                     <ul class="dropdown-menu" style="min-width: 200px;">
                       <li><a class="linkages" data-id="empty" href="#">Empty Linkage</a></li>
                       <li class="divider"></li>
-                      <li><a class="linkages" data-id="peaucellierLipkin" href="#">Peaucellier–Lipkin Linkage</a></li>
                       <li class="dropdown-submenu">
                           <a tabindex="-1">Alphabet Linkages<span class="pull-right fui-arrow-right"></span></a>
                           <ul class="dropdown-menu">
@@ -76,7 +75,10 @@
                               <li><a href="#" class="linkages" data-id="fontLinkageO">O</a></li>
                           </ul>
                       </li>
+                      <li><a class="linkages" data-id="jansenLinkage" href="#">Jansen's Linkage</a></li>
                       <li><a id="kempeLinkage" href="#">Kempe Linkage (WIP)</a></li>
+                      <li><a class="linkages" data-id="peaucellierLipkin" href="#">Peaucellier–Lipkin Linkage</a></li>
+                      <li><a class="linkages" data-id="strandbeestLinkage" href="#">Strandbeest</a></li>
                     </ul>
                 </li>
                 <li class="dropdown navDropdown">
@@ -167,12 +169,16 @@
                 </div><br/>
               </div><br/>
               <div>
-                  <a href="#" class="seeMore closed" data-id="physicsSettings"><span class="fui-triangle-down"></span>Physics Engine</a>:
+                  <a href="#" class="seeMore open" data-id="physicsSettings"><span class="fui-triangle-down"></span>Physics Engine</a>:
               </div>
-              <div id="physicsSettings" class="hide indent">
+              <div id="physicsSettings" class="inlineBlock indent">
                 <label class="radio">
                     <input name="physicsEngine" value="box2d" data-toggle="radio" class="custom-radio" type="radio"><span class="icons"><span class="icon-unchecked"></span><span class="icon-checked"></span></span>
                     Box2D
+                </label>
+                <label class="radio">
+                    <input name="physicsEngine" value="chsz" data-toggle="radio" class="custom-radio" type="radio"><span class="icons"><span class="icon-unchecked"></span><span class="icon-checked"></span></span>
+                    Box2D (<span style="font-size:12px">Zero Damping</span>)
                 </label>
                 <label class="radio">
                     <input name="physicsEngine" value="chsz" data-toggle="radio" class="custom-radio" type="radio"><span class="icons"><span class="icon-unchecked"></span><span class="icon-checked"></span></span>
