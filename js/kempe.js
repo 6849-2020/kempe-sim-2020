@@ -144,7 +144,7 @@ function pushLineToTrace(x1, y1, x2, y2, edge) {
   }
 }
 
-function createPhysicsWorld() {
+function createPhysicsWorld(globals) {
     var   b2Vec2 = Box2D.Common.Math.b2Vec2
        ,  b2AABB = Box2D.Collision.b2AABB
        ,  b2BodyDef = Box2D.Dynamics.b2BodyDef
@@ -163,7 +163,7 @@ function createPhysicsWorld() {
        ,  b2RevolveJointDef = Box2D.Dynamics.Joints.b2RevoluteJointDef
        ;
     var g = new b2Vec2(0, 0);
-    if (globals.gravity) {
+    if (globals.box2dGravity) {
       g = new b2Vec2(0, -1);
     }
     world = new b2World(
@@ -200,12 +200,12 @@ function createPhysicsWorld() {
         bod.CreateFixture(fixDef);
 
         bodies.push(bod);
-        if (globals.noDamping) {
-          bod.m_angularDamping = 0;
-          bod.m_linearDamping = 0;
-        } else {
+        if (globals.box2dDamping) {
           bod.m_angularDamping = 30.0;
           bod.m_linearDamping = 30.0;
+        } else {
+          bod.m_angularDamping = 0.0;
+          bod.m_linearDamping = 0.0;
         }
     }
 
@@ -455,9 +455,12 @@ function draw() {
     ctx.fillRect(0, 0, VIEW_WIDTH, VIEW_HEIGHT);
 
     // draw pen lines
+    var e_idx = 0;
+    // seaborn color palette (muted)
+    var colors = ['red', '#4878d0', '#ee854a', '#6acc64', '#d65f5f', '#956cb4', '#8c613c', '#dc7ec0', '#797979', '#d5bb67', '#82c6e2'];
     for (var e in traceHistoryEdges) {
       ctx.lineWidth = 5;
-      ctx.fillStyle = 'red';
+      ctx.fillStyle = colors[e_idx % colors.length];
       ctx.beginPath();
       // relative positions because trace should move when we move the linkage
       ctx.moveTo(cx + sx*traceHistoryEdges[e][0][0], cy + sy*traceHistoryEdges[e][0][1]);
@@ -470,12 +473,14 @@ function draw() {
       }
       ctx.closePath();
       ctx.fill();
+      e_idx += 1;
     }
 
     // draw pen points
+    var p_idx = 0;
     for (var p in traceHistory) {
       ctx.lineWidth = 5;
-      ctx.strokeStyle = 'red';
+      ctx.strokeStyle = colors[p_idx % colors.length];
       ctx.beginPath();
       // relative positions because trace should move when we move the linkage
       ctx.moveTo(cx + sx*traceHistory[p][0][0], cy + sy*traceHistory[p][0][1]);
@@ -483,6 +488,7 @@ function draw() {
         ctx.lineTo(cx + sx*traceHistory[p][i][0], cy + sy*traceHistory[p][i][1])
       }
       ctx.stroke();
+      p_idx += 1;
     }
 
     if (!showLinkage) {

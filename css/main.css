@@ -201,6 +201,9 @@ p{
     padding-top: 3px;
     pointer-events: auto!important;
 }
+#controlsLeft .checkbox{
+  pointer-events: auto!important;
+}
 
 .sliderInput{
     float:right;

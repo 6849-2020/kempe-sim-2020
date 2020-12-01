@@ -48,6 +48,12 @@ function initControls(globals){
     saveFOLD(globals);
   });
 
+  setCheckbox("#box2dDamping", globals.box2dDamping, function(val){
+      globals.box2dDamping = val;
+      console.log(globals.box2dDamping);
+      createPhysicsWorld(globals);
+  });
+
   setCheckbox("#exportFoldEdgeLengths", globals.exportFoldEdgeLengths, function(val){
       globals.exportFoldEdgeLengths = val;
   });
@@ -96,6 +102,11 @@ function initControls(globals){
   setRadio("physicsEngine", globals.physicsEngine, function(val) {
     globals.physicsEngine = val;
     updatePhysicsMode(globals);
+    if (val == "box2d") {
+      $("#box2dOptions").show();
+    } else {
+      $("#box2dOptions").hide();
+    }
   } );
 
   setLink("#viewLinkageDrawing", function() {

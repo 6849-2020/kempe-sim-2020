@@ -78,7 +78,7 @@
                       <li><a class="linkages" data-id="jansenLinkage" href="#">Jansen's Linkage</a></li>
                       <li><a id="kempeLinkage" href="#">Kempe Linkage (WIP)</a></li>
                       <li><a class="linkages" data-id="peaucellierLipkin" href="#">Peaucellier–Lipkin Linkage</a></li>
-                      <li><a class="linkages" data-id="strandbeestLinkage" href="#">Strandbeest</a></li>
+                      <li><a class="linkages" data-id="strandbeestLinkage" href="#">Strandbeest (Four legged)</a></li>
                     </ul>
                 </li>
                 <li class="dropdown navDropdown">
@@ -176,6 +176,12 @@
                     <input name="physicsEngine" value="box2d" data-toggle="radio" class="custom-radio" type="radio"><span class="icons"><span class="icon-unchecked"></span><span class="icon-checked"></span></span>
                     Box2D
                 </label>
+                <div id="box2dOptions" class="inlineBlock indent" style="font-size:14px;">
+                  <label class="checkbox" for="box2dDamping">
+                      <input id="box2dDamping" data-toggle="checkbox" class="custom-checkbox layersSelector" type="checkbox"><span class="icons"><span class="icon-unchecked"></span><span class="icon-checked"></span></span>
+                      Damped
+                  </label>
+                </div>
                 <label class="radio">
                     <input name="physicsEngine" value="chsz" data-toggle="radio" class="custom-radio" type="radio"><span class="icons"><span class="icon-unchecked"></span><span class="icon-checked"></span></span>
                     C.H.S.Z.
@@ -308,7 +314,10 @@
           if (($("#warningMessage").html()) != "") $("#warningMessage").append("<br/><hr>" + msg);
           else $("#warningMessage").html(msg);
           if (!$('#warningModal').hasClass('show')) $("#warningModal").modal("show");
-      }
+      },
+      box2dDamping : true,
+      box2dGravity : false,
+
     }
 
     initImporter(globals);
