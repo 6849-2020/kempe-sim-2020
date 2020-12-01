@@ -162,10 +162,15 @@ function createPhysicsWorld() {
        ,  b2RevolveJoint = Box2D.Dynamics.Joints.b2RevoluteJoint
        ,  b2RevolveJointDef = Box2D.Dynamics.Joints.b2RevoluteJointDef
        ;
+    var g = new b2Vec2(0, 0);
+    if (globals.gravity) {
+      g = new b2Vec2(0, -1);
+    }
     world = new b2World(
-          new b2Vec2(0, 0)    //gravity
+          g    //gravity
        ,  true                 //allow sleep
     );
+
     bodies = [];
     joints = [];
 
@@ -195,10 +200,13 @@ function createPhysicsWorld() {
         bod.CreateFixture(fixDef);
 
         bodies.push(bod);
-        // bod.m_angularDamping = 30.0;
-        // bod.m_linearDamping = 30.0;
-        bod.m_angularDamping = 0;
-        bod.m_linearDamping = 0;
+        if (globals.noDamping) {
+          bod.m_angularDamping = 0;
+          bod.m_linearDamping = 0;
+        } else {
+          bod.m_angularDamping = 30.0;
+          bod.m_linearDamping = 30.0;
+        }
     }
 
     var distJointDef = new b2DistanceJointDef;
@@ -222,7 +230,7 @@ function createPhysicsWorld() {
     }
 }
 
-function initProcessLinesAndPoints() {
+function initProcessLinesAndPoints(globals) {
     traceHistory = {};
     traceHistoryEdges = {};
     lines = {};
@@ -264,8 +272,9 @@ function initProcessLinesAndPoints() {
             data.points[i].push(0);
     }
 
-    if (BOX2DPHYSICS)
-        createPhysicsWorld();
+    if (BOX2DPHYSICS) {
+        createPhysicsWorld(globals);
+    }
 }
 
 function hasLine(l) {
@@ -387,7 +396,7 @@ function initKempe(globals) {
     line_end = [0,0];
     drawLines = globals.drawLines; // TODO: load lines from FOLD
 
-    initProcessLinesAndPoints();
+    initProcessLinesAndPoints(globals);
 }
 
 function setFoldData(globals, fold) {
@@ -430,7 +439,7 @@ function setFoldData(globals, fold) {
   globals.drawLines = drawLines;
   globals.resetData = JSON.parse(JSON.stringify(globals.data));
 
-  initProcessLinesAndPoints();
+  initProcessLinesAndPoints(globals);
 }
 
 
@@ -602,12 +611,6 @@ function draw() {
     }
 
 
-}
-
-function toggleEditMode() {
-    edit_mode = !edit_mode;
-    if (!edit_mode)
-        initProcessLinesAndPoints();
 }
 
 function figureAngles(a, b) {
@@ -1166,7 +1169,7 @@ function updateEditMode(globals) {
     edit_mode = (globals.controlMode == "edit");
     if (!edit_mode) {
         globals.resetData = JSON.parse(JSON.stringify(data));
-        initProcessLinesAndPoints();
+        initProcessLinesAndPoints(globals);
     }
 }
 
