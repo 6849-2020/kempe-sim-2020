@@ -632,7 +632,6 @@ function figureAngles(a, b) {
     else angleb += diff2-Math.PI*2;
 }
 
-var count = 0;
 var t = 0;
 function update() {
     t += 0.1;
@@ -645,9 +644,6 @@ function update() {
                 data.points[i][0] = pos.x;
                 data.points[i][1] = pos.y;
                 // console.log(pos);
-            }
-            for (var i = 0; i < joints.length; i++) {
-              joints[i].length += Math.cos(t) * 5;
             }
             world.Step(1 / 60, 10, 10);
             world.ClearForces();
