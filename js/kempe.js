@@ -632,9 +632,7 @@ function figureAngles(a, b) {
     else angleb += diff2-Math.PI*2;
 }
 
-var t = 0;
 function update() {
-    t += 0.1;
     if (!edit_mode)
     {
         if (BOX2DPHYSICS) {
@@ -648,7 +646,6 @@ function update() {
             world.Step(1 / 60, 10, 10);
             world.ClearForces();
         } else {
-            count++;
             if (selected)
             {
                 var dx = cmx-data.points[selected-1][0];
