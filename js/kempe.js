@@ -632,7 +632,6 @@ function figureAngles(a, b) {
     else angleb += diff2-Math.PI*2;
 }
 
-var count = 0;
 var t = 0;
 function update() {
     t += 0.1;
@@ -646,13 +645,10 @@ function update() {
                 data.points[i][1] = pos.y;
                 // console.log(pos);
             }
-            for (var i = 0; i < joints.length; i++) {
-              joints[i].length += Math.cos(t) * 5;
-            }
+
             world.Step(1 / 60, 10, 10);
             world.ClearForces();
         } else {
-            count++;
             if (selected)
             {
                 var dx = cmx-data.points[selected-1][0];
@@ -666,10 +662,10 @@ function update() {
                 //     console.log(forces);
             } else
             {
-                var i = 0;
-                for (i=0; i<data.points.length; i++)
-                    if (data.points[i][2] != 'X') break;
-                var forces = evalForces3(data, i, 0, 0);
+                // var i = 0;
+                // for (i=0; i<data.points.length; i++)
+                //     if (data.points[i][2] != 'X') break;
+                var forces = evalForces3(data, 1, 0, 0);
                 // RK4step(data, forces, 0.1);
                 timeStep(data, forces, 0.1);
                 // if (count<=10)
@@ -1147,7 +1143,7 @@ function handleKeyUp(event) {
 }
 
 function handleKeyPress(event) {
-
+  console.log(bodies);
 }
 
 var lastTime = 0;
@@ -1159,6 +1155,9 @@ function updateAll() {
         deltaTime = timeNow - lastTime;
     }
     lastTime = timeNow;
+
+    //console.log(bodies);
+
 
     update();
 }
