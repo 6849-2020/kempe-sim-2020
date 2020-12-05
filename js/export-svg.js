@@ -54,3 +54,23 @@ function exportToSvg(globals) {
   dlAnchorElem.setAttribute("download", "linkage.svg");
   dlAnchorElem.click();
 }
+
+function exportToCsv(globals) {
+  var csv = "";
+
+  var p_idx = 0;
+  var colors = ["red", "green", "blue", "yellow", "magenta", "cyan"];
+  for (var p in traceHistory) {
+    csv += "PEN" + p_idx + ",,\n";
+    for (var i = 0; i < traceHistory[p].length; i++) {
+      csv += traceHistory[p][i][0] + "," + traceHistory[p][i][1] + ",0\n";
+    }
+    p_idx += 1;
+  }
+
+  var dataStr = "data:text.csv;charset=utf-8," + encodeURIComponent(csv);
+  var dlAnchorElem = document.getElementById('downloadAnchorElem');
+  dlAnchorElem.setAttribute("href",     dataStr     );
+  dlAnchorElem.setAttribute("download", "linkage.csv");
+  dlAnchorElem.click();
+}

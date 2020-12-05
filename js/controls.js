@@ -45,7 +45,11 @@ function initControls(globals){
   });
 
   setLink("#saveSVG", function() {
-    exportToSvg();
+    exportToSvg(globals);
+  });
+
+  setLink("#saveCSV", function() {
+    exportToCsv(globals);
   });
 
   setLink("#doFOLDsave", function() {
