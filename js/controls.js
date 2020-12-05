@@ -44,6 +44,10 @@ function initControls(globals){
     $('#exportFOLDModal').modal('show');
   });
 
+  setLink("#saveSVG", function() {
+    exportToSvg(globals);
+  });
+
   setLink("#doFOLDsave", function() {
     saveFOLD(globals);
   });

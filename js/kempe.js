@@ -47,6 +47,11 @@ var traceHistoryEdges = {};
 var showLinkage = true;
 
 
+// TODO: enable different color palettes. export this to a different file
+// seaborn color palette (muted)
+var traceColors = ['red', '#4878d0', '#ee854a', '#6acc64', '#d65f5f', '#956cb4', '#8c613c', '#dc7ec0', '#797979', '#d5bb67', '#82c6e2'];
+
+
 function kempeStart(globals) {
     equationCurve = false;
     BOX2DPHYSICS = (globals.physicsEngine == "box2d");
@@ -456,11 +461,9 @@ function draw() {
 
     // draw pen lines
     var e_idx = 0;
-    // seaborn color palette (muted)
-    var colors = ['red', '#4878d0', '#ee854a', '#6acc64', '#d65f5f', '#956cb4', '#8c613c', '#dc7ec0', '#797979', '#d5bb67', '#82c6e2'];
     for (var e in traceHistoryEdges) {
       ctx.lineWidth = 5;
-      ctx.fillStyle = colors[e_idx % colors.length];
+      ctx.fillStyle = traceColors[e_idx % traceColors.length];
       ctx.beginPath();
       // relative positions because trace should move when we move the linkage
       ctx.moveTo(cx + sx*traceHistoryEdges[e][0][0], cy + sy*traceHistoryEdges[e][0][1]);
@@ -480,7 +483,7 @@ function draw() {
     var p_idx = 0;
     for (var p in traceHistory) {
       ctx.lineWidth = 5;
-      ctx.strokeStyle = colors[p_idx % colors.length];
+      ctx.strokeStyle = traceColors[p_idx % traceColors.length];
       ctx.beginPath();
       // relative positions because trace should move when we move the linkage
       ctx.moveTo(cx + sx*traceHistory[p][0][0], cy + sy*traceHistory[p][0][1]);
