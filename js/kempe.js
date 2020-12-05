@@ -41,10 +41,12 @@ var anglea, angleb;
 var displayhelp  = true;
 var is_chrome = navigator.userAgent.toLowerCase().indexOf('chrome') > -1;
 
-var drawTrace = false;
+var drawTrace = true;
 var traceHistory = {};
 var traceHistoryEdges = {};
 var showLinkage = true;
+var t = 0;
+var paperRotationFrequency = 0.05;
 
 
 function kempeStart(globals) {
@@ -108,19 +110,21 @@ function recalcViewDimentions()
 
 
 function pushToTrace(x, y, point) {
+  var trace_x = Math.cos(t * paperRotationFrequency) * x - Math.sin(t * paperRotationFrequency) * y;
+  var trace_y = Math.sin(t * paperRotationFrequency) * x + Math.cos(t * paperRotationFrequency) * y;
   if (!drawTrace)
     return;
   if (!traceHistory[point]) {
-    traceHistory[point] = [[x, y]];
+    traceHistory[point] = [[trace_x, trace_y]];
   } else {
     // only add point if it's far enough than previous point
     var lastPoint = traceHistory[point][traceHistory[point].length - 1]
-    var dist = Math.sqrt((lastPoint[0] - x) ** 2 + (lastPoint[1] - y) ** 2);
+    var dist = Math.sqrt((lastPoint[0] - trace_x) ** 2 + (lastPoint[1] - trace_y) ** 2);
     if (dist > 0.01) {
-      traceHistory[point].push([x, y]);
+      traceHistory[point].push([trace_x, trace_y]);
     }
   }
-  if (traceHistory[point].length > 5000) {
+  if (traceHistory[point].length > 10000) {
     traceHistory[point].shift();
   }
 }
@@ -191,7 +195,7 @@ function createPhysicsWorld(globals) {
     {
 
         if (data.points[i][2] == 'X')
-            bodyDef.type = b2Body.b2_staticBody;
+            bodyDef.type = b2Body.b2_kinematicBody;
         else
             bodyDef.type = b2Body.b2_dynamicBody;
         bodyDef.position.x = data.points[i][0];
@@ -200,12 +204,21 @@ function createPhysicsWorld(globals) {
         bod.CreateFixture(fixDef);
 
         bodies.push(bod);
+
+
+
         if (globals.box2dDamping) {
           bod.m_angularDamping = 30.0;
           bod.m_linearDamping = 30.0;
         } else {
           bod.m_angularDamping = 0.0;
           bod.m_linearDamping = 0.0;
+        }
+
+        if (i == 3) {
+          //bod.SetLinearVelocity(new b2Vec2(1, 1));
+          //bod.SetAngularVelocity(1000);
+          // bod.m_angularDamping = 0.0;
         }
     }
 
@@ -221,9 +234,8 @@ function createPhysicsWorld(globals) {
             bodies[data.edges[i][1]],
             bodies[data.edges[i][0]].GetWorldCenter(),
             bodies[data.edges[i][1]].GetWorldCenter());
-        // turn into a infinite spring
-        // distJointDef.frequencyHz = 0.5;
-        // distJointDef.dampingRatio = 0;
+        distJointDef.frequencyHz = 0;
+        distJointDef.dampingRatio = 1;
         console.log(distJointDef);
         j = world.CreateJoint(distJointDef);
         joints.push(j);
@@ -395,6 +407,7 @@ function initKempe(globals) {
     line_start = false;
     line_end = [0,0];
     drawLines = globals.drawLines; // TODO: load lines from FOLD
+    paperRotationFrequency = globals.paperRotationFrequency;
 
     initProcessLinesAndPoints(globals);
 }
@@ -454,6 +467,13 @@ function draw() {
     ctx.fillStyle = 'white'
     ctx.fillRect(0, 0, VIEW_WIDTH, VIEW_HEIGHT);
 
+    ctx.translate(cx, cy);
+    ctx.rotate(t * paperRotationFrequency);
+
+    ctx.strokeStyle = '#888888';
+    ctx.rect(-4 * sx, -4 * sy, 8*sx, 8*sy);
+    ctx.stroke();
+
     // draw pen lines
     var e_idx = 0;
     // seaborn color palette (muted)
@@ -463,13 +483,13 @@ function draw() {
       ctx.fillStyle = colors[e_idx % colors.length];
       ctx.beginPath();
       // relative positions because trace should move when we move the linkage
-      ctx.moveTo(cx + sx*traceHistoryEdges[e][0][0], cy + sy*traceHistoryEdges[e][0][1]);
+      ctx.moveTo(sx*traceHistoryEdges[e][0][0], sy*traceHistoryEdges[e][0][1]);
       for (var i = 1; i < traceHistoryEdges[e].length; i++) {
-        ctx.lineTo(cx + sx*traceHistoryEdges[e][i][0], cy + sy*traceHistoryEdges[e][i][1]);
+        ctx.lineTo(sx*traceHistoryEdges[e][i][0], sy*traceHistoryEdges[e][i][1]);
       }
-      ctx.lineTo(cx + sx*traceHistoryEdges[e][traceHistoryEdges[e].length-1][2], cy + sy*traceHistoryEdges[e][traceHistoryEdges[e].length-1][3]);
+      ctx.lineTo(sx*traceHistoryEdges[e][traceHistoryEdges[e].length-1][2], sy*traceHistoryEdges[e][traceHistoryEdges[e].length-1][3]);
       for (var i = traceHistoryEdges[e].length - 2; i >= 0; i--) {
-        ctx.lineTo(cx + sx*traceHistoryEdges[e][i][2], cy + sy*traceHistoryEdges[e][i][3]);
+        ctx.lineTo(sx*traceHistoryEdges[e][i][2], sy*traceHistoryEdges[e][i][3]);
       }
       ctx.closePath();
       ctx.fill();
@@ -479,17 +499,19 @@ function draw() {
     // draw pen points
     var p_idx = 0;
     for (var p in traceHistory) {
-      ctx.lineWidth = 5;
+      ctx.lineWidth = 2;
       ctx.strokeStyle = colors[p_idx % colors.length];
       ctx.beginPath();
       // relative positions because trace should move when we move the linkage
-      ctx.moveTo(cx + sx*traceHistory[p][0][0], cy + sy*traceHistory[p][0][1]);
+      ctx.moveTo(sx*traceHistory[p][0][0], sy*traceHistory[p][0][1]);
       for (var i = 1; i < traceHistory[p].length; i++) {
-        ctx.lineTo(cx + sx*traceHistory[p][i][0], cy + sy*traceHistory[p][i][1])
+        ctx.lineTo(sx*traceHistory[p][i][0], sy*traceHistory[p][i][1])
       }
       ctx.stroke();
       p_idx += 1;
     }
+    ctx.rotate(-t * paperRotationFrequency);
+    ctx.translate(-cx, -cy);
 
     if (!showLinkage) {
       return;
@@ -612,8 +634,9 @@ function draw() {
         ctx.fill();
         ctx.stroke();
 
-        if (!edit_mode && dd.points[i][2] == 'P')
+        if (!edit_mode && dd.points[i][2] == 'P') {
           pushToTrace(dd.points[i][0], dd.points[i][1], i);
+        }
     }
 
 
@@ -632,21 +655,62 @@ function figureAngles(a, b) {
     else angleb += diff2-Math.PI*2;
 }
 
-var t = 0;
 function update() {
     t += 0.1;
-    if (!edit_mode)
-    {
+    if (!edit_mode) {
         if (BOX2DPHYSICS) {
-            for (var i=0; i<bodies.length; i++)
-            {
+            var BOX_STEP = 1 / 60;
+            var b2Vec2 = Box2D.Common.Math.b2Vec2;
+            for (var i=0; i<bodies.length; i++) {
                 var pos = bodies[i].GetPosition();
+                console.log(pos);
                 data.points[i][0] = pos.x;
                 data.points[i][1] = pos.y;
                 // console.log(pos);
-            }
+                if (data.pointsRotors && data.pointsRotors[i].hasRotor) {
 
-            world.Step(1 / 60, 10, 10);
+                  // var dx = data.points[i][0] - data.points[data.pointsRotors[i].fixedTo][0];
+                  // var dy = data.points[i][1] - data.points[data.pointsRotors[i].fixedTo][1];
+                  // var norm = Math.sqrt(dx*dx + dy*dy);
+                  // dx /= norm;
+                  // dy /= norm;
+                  // var freq = data.pointsRotors[i].frequency;
+                  // dx *= freq;
+                  // dy *= freq;
+                  // bodies[i].SetLinearVelocity( new b2Vec2 (dy, -dx) );
+                  var velocity=data.pointsRotors[i].frequency;
+
+                  var pivot = bodies[data.pointsRotors[i].fixedTo].GetPosition();
+                  var bodyDirection = new b2Vec2(pos.x, pos.y); // substract from ficture point
+                  bodyDirection.Subtract(pivot);
+                  bodyDirection.Normalize();
+
+                  //to get velocity direction in clockwise motion with respect
+                  // to pivot we  need to rotate above direction vector by 90
+                  // degrees in anti clockwise  direction
+                  var bodyVelocity = new b2Vec2( bodyDirection.y * velocity, -bodyDirection.x * velocity);
+                  var tmp = new b2Vec2(pos.x, pos.y);
+                  tmp.Subtract(pivot);
+                  var distance = tmp.Length();
+                  //Convert radius to box dimensions and get the difference
+                  var delta=distance - data.pointsRotors[i].radius; //-ConvertToBoxCoordinate(radius);
+                  console.log(delta);
+                  //Here we multiply by -1 to get centripetal direction
+                  //Then we divide by BOX_STEP which is equal to frame delta time
+
+                  var centripetlVelocity=new b2Vec2( bodyDirection.x,  bodyDirection.y);
+                  centripetlVelocity.Multiply(-1 * delta / BOX_STEP);
+
+                  var rotatingVelocity=new b2Vec2(0, 0);
+                  //Add fixed velocity tangent to the circular motion
+                  rotatingVelocity.Add( bodyVelocity );
+                  //Add centripetal velocity
+                  rotatingVelocity.Add(centripetlVelocity);
+
+                  bodies[i].SetLinearVelocity(rotatingVelocity);
+                }
+            }
+            world.Step(BOX_STEP, 10, 10);
             world.ClearForces();
         } else {
             if (selected)
@@ -662,10 +726,10 @@ function update() {
                 //     console.log(forces);
             } else
             {
-                // var i = 0;
-                // for (i=0; i<data.points.length; i++)
-                //     if (data.points[i][2] != 'X') break;
-                var forces = evalForces3(data, 1, 0, 0);
+                var i = 0;
+                for (i=0; i<data.points.length; i++)
+                    if (data.points[i][2] != 'X') break;
+                var forces = evalForces3(data, i, 0, 0);
                 // RK4step(data, forces, 0.1);
                 timeStep(data, forces, 0.1);
                 // if (count<=10)

@@ -296,16 +296,31 @@
       data : {
         points:
           [
-              [0  ,   0 ,   'X'],
-              [0  ,   1 ,   'F'],
-              [2  ,   1 ,   'P']
+              [0  ,   -2,     'X'],
+              [0  ,   -1.5 ,   'X'],
+              [0  ,   0.5 ,   'P'],
+              [Math.sqrt(3)  ,   -1.5 ,   'X'],
+              [0  ,   -0.5,    'F'],
+              [Math.sqrt(3)  ,   -1.8 ,     'X'],
           ],
+        pointsRotors:
+         [
+           { hasRotor: false },
+           { hasRotor: true, fixedTo: 0, frequency: 4, radius: 0.5},
+           { hasRotor: false },
+           { hasRotor: true, fixedTo: 5, frequency: 0.05, radius: 0.3 },
+           { hasRotor: false },
+           { hasRotor: false },
+         ],
         edges:
           [
-              [0, 1,  1],
-              [1, 2,  2],
+              [1, 2],
+              [3, 4],
+              [2, 4],
+              [1, 4],
           ]
       },
+      paperRotationFrequency : 0.01,
       drawLines : {},
       setFoldData : function (fold) {
         console.log(fold);
@@ -317,7 +332,6 @@
       },
       box2dDamping : true,
       box2dGravity : false,
-
     }
 
     initImporter(globals);

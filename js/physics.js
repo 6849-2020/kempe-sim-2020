@@ -120,7 +120,7 @@ function evalForces3(data, fi, fx, fy) {
         fx = fx/flen;
         fy = fy/flen;
     }
-    flen = Math.min(flen, 10);
+    flen = Math.min(flen, 20);
     fx *= flen;
     fy *= flen;
 
