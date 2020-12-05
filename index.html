@@ -18,6 +18,7 @@
     <script type="text/javascript" src="dependencies/numeric-1.2.3.js"></script>
     <script type="text/javascript" src="dependencies/colors.min.js"></script>
     <script type="text/javascript" src="dependencies/fold.js"></script>
+    <script type="text/javascript" src="dependencies/canvas2svg.js"></script>
 
     <script type="text/javascript" src="js/cas.js"></script>
     <script type="text/javascript" src="js/physics.js"></script>
@@ -27,6 +28,7 @@
     <script type="text/javascript" src="js/fold-actions.js"></script>
     <script type="text/javascript" src="js/controls.js"></script>
     <script type="text/javascript" src="js/linkages.js"></script>
+    <script type="text/javascript" src="js/export-svg.js"></script>
   </head>
   <body>
 
@@ -60,6 +62,7 @@
                       <li><a id="tips" href="#">File Import Tips</a></li>
                       <li class="divider"></li>
                       <li><a id="saveFOLD" href="#">Save Linkage as FOLD...</a></li>
+                      <li><a id="saveSVG" href="#">Save Drawing as SVG...</a></li>
                     </ul>
                 </li>
                 <li class="dropdown navDropdown">
@@ -296,19 +299,19 @@
       data : {
           points:
           [
-              [-2  ,   -2,     'X'],
-              [-2  ,   -1.5 ,   'X'],
-              [-2  ,   0.5 ,   'P'],
-              [-2 + Math.sqrt(3)  ,   -1.5 ,   'X'],
-              [-2   ,   -0.5,    'F'],
-              [-2 + Math.sqrt(3)  ,   -2.2 ,     'X'],
+              [-1  ,   -2,     'X'],
+              [-1  ,   -1.5 ,   'X'],
+              [-1  ,   0.5 ,   'P'],
+              [-1 + Math.sqrt(3)  ,   -1.5 ,   'X'],
+              [-1   ,   -0.5,    'F'],
+              [-1 + Math.sqrt(3)  ,   -2.2 ,     'X'],
           ],
         pointsRotors:
          [
            { hasRotor: false },
            { hasRotor: true, fixedTo: 0, frequency: 5, radius: 0.5},
            { hasRotor: false },
-           { hasRotor: true, fixedTo: 5, frequency: 0.02, radius: 0.7 },
+           { hasRotor: true, fixedTo: 5, frequency: 0.05, radius: 0.7 },
            { hasRotor: false },
            { hasRotor: false },
          ],

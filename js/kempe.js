@@ -124,9 +124,9 @@ function pushToTrace(x, y, point) {
       traceHistory[point].push([trace_x, trace_y]);
     }
   }
-  if (traceHistory[point].length > 10000) {
-    traceHistory[point].shift();
-  }
+  // if (traceHistory[point].length > 10000) {
+  //   traceHistory[point].shift();
+  // }
 }
 
 function pushLineToTrace(x1, y1, x2, y2, edge) {
@@ -656,28 +656,18 @@ function figureAngles(a, b) {
 }
 
 function update() {
-    t += 0.1;
     if (!edit_mode) {
+        t += 0.1;
         if (BOX2DPHYSICS) {
             var BOX_STEP = 1 / 60;
             var b2Vec2 = Box2D.Common.Math.b2Vec2;
             for (var i=0; i<bodies.length; i++) {
                 var pos = bodies[i].GetPosition();
-                console.log(pos);
                 data.points[i][0] = pos.x;
                 data.points[i][1] = pos.y;
                 // console.log(pos);
                 if (data.pointsRotors && data.pointsRotors[i].hasRotor) {
-
-                  // var dx = data.points[i][0] - data.points[data.pointsRotors[i].fixedTo][0];
-                  // var dy = data.points[i][1] - data.points[data.pointsRotors[i].fixedTo][1];
-                  // var norm = Math.sqrt(dx*dx + dy*dy);
-                  // dx /= norm;
-                  // dy /= norm;
-                  // var freq = data.pointsRotors[i].frequency;
-                  // dx *= freq;
-                  // dy *= freq;
-                  // bodies[i].SetLinearVelocity( new b2Vec2 (dy, -dx) );
+                  // based on https://rotatingcanvas.com/move-box2d-body-in-circular-path-in-libgdx/
                   var velocity=data.pointsRotors[i].frequency;
 
                   var pivot = bodies[data.pointsRotors[i].fixedTo].GetPosition();
@@ -694,7 +684,6 @@ function update() {
                   var distance = tmp.Length();
                   //Convert radius to box dimensions and get the difference
                   var delta=distance - data.pointsRotors[i].radius; //-ConvertToBoxCoordinate(radius);
-                  console.log(delta);
                   //Here we multiply by -1 to get centripetal direction
                   //Then we divide by BOX_STEP which is equal to frame delta time
 
