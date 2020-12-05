@@ -294,30 +294,32 @@
       kempeRenderMode : "optimized",
       exportFoldEdgeLengths : true,
       data : {
-        points:
+          points:
           [
-              [0  ,   -2,     'X'],
-              [0  ,   -1.5 ,   'X'],
-              [0  ,   0.5 ,   'P'],
-              [Math.sqrt(3)  ,   -1.5 ,   'X'],
-              [0  ,   -0.5,    'F'],
-              [Math.sqrt(3)  ,   -1.8 ,     'X'],
+              [-2  ,   -2,     'X'],
+              [-2  ,   -1.5 ,   'X'],
+              [-2  ,   0.5 ,   'P'],
+              [-2 + Math.sqrt(3)  ,   -1.5 ,   'X'],
+              [-2   ,   -0.5,    'F'],
+              [-2 + Math.sqrt(3)  ,   -2.2 ,     'X'],
           ],
         pointsRotors:
          [
            { hasRotor: false },
-           { hasRotor: true, fixedTo: 0, frequency: 4, radius: 0.5},
+           { hasRotor: true, fixedTo: 0, frequency: 5, radius: 0.5},
            { hasRotor: false },
-           { hasRotor: true, fixedTo: 5, frequency: 0.05, radius: 0.3 },
+           { hasRotor: true, fixedTo: 5, frequency: 0.02, radius: 0.7 },
            { hasRotor: false },
            { hasRotor: false },
          ],
         edges:
           [
+              [0, 1],
               [1, 2],
               [3, 4],
               [2, 4],
               [1, 4],
+              [3, 5]
           ]
       },
       paperRotationFrequency : 0.01,

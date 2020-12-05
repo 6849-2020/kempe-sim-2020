@@ -120,7 +120,7 @@ function pushToTrace(x, y, point) {
     // only add point if it's far enough than previous point
     var lastPoint = traceHistory[point][traceHistory[point].length - 1]
     var dist = Math.sqrt((lastPoint[0] - trace_x) ** 2 + (lastPoint[1] - trace_y) ** 2);
-    if (dist > 0.01) {
+    if (dist > 0.005) {
       traceHistory[point].push([trace_x, trace_y]);
     }
   }
@@ -252,7 +252,7 @@ function initProcessLinesAndPoints(globals) {
         if (data.edges[i][0] == data.edges[i][1])
             continue;
 
-        if (data.points[data.edges[i][0]][2] == 'X' && data.points[data.edges[i][1]][2] == 'X') continue;
+        //if (data.points[data.edges[i][0]][2] == 'X' && data.points[data.edges[i][1]][2] == 'X') continue;
 
         if (data.edges[i][0] < data.edges[i][1])
             lines[data.edges[i][0]+" "+data.edges[i][1]] = true;
@@ -267,7 +267,7 @@ function initProcessLinesAndPoints(globals) {
         var s = k.split(" ");
         var p1 = parseInt(s[0]);
         var p2 = parseInt(s[1]);
-        if (data.points[p1][2] == 'X' && data.points[p2][2] == 'X') continue;
+        //if (data.points[p1][2] == 'X' && data.points[p2][2] == 'X') continue;
         var x = data.points[p1][0]-data.points[p2][0];
         var y = data.points[p1][1]-data.points[p2][1];
         data.edges.push([p1, p2, Math.sqrt(x*x+y*y)]);
