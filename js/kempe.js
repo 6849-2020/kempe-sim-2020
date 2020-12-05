@@ -169,7 +169,7 @@ function createPhysicsWorld(globals) {
        ;
     var g = new b2Vec2(0, 0);
     if (globals.box2dGravity) {
-      g = new b2Vec2(0, -1);
+      g = new b2Vec2(0, -100);
     }
     world = new b2World(
           g    //gravity

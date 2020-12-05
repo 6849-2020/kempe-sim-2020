@@ -52,6 +52,11 @@ function initControls(globals){
     saveFOLD(globals);
   });
 
+  setCheckbox("#box2dGravity", globals.box2dGravity, function(val){
+      globals.box2dGravity = val;
+      createPhysicsWorld(globals);
+  });
+
   setCheckbox("#box2dDamping", globals.box2dDamping, function(val){
       globals.box2dDamping = val;
       console.log(globals.box2dDamping);
