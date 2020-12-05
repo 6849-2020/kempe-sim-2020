@@ -2,9 +2,9 @@
 
 An interactive interface for linkages that draw.
 
-*Add picture here*
+![Image](images/drawing1.png)
 
-This was a final project for [6.849 Fall 2020](https://courses.csail.mit.edu/6.849/fall20/) that continued the work done in a previous final project for [6.849 Fall 2012](https://github.com/6849-2020/kempe-sim-2012) that contained a physics simulation for rigid linkages.
+This was a final project for [6.849 Fall 2020](https://courses.csail.mit.edu/6.849/fall20/) by Eyal Perry that continued the work done in a previous final project for [6.849 Fall 2012](https://github.com/6849-2020/kempe-sim-2012) that had a physics simulation for rigid linkages.
 
 
 ## How to Use
@@ -28,7 +28,7 @@ In this mode you can add/remove points and edges. There are three types of point
 
 There are also two types of edges: regular and "Pen". Pen edges will draw a trace as they move.
 
-** add picture here **
+![Drawing Edges](images/edges1.png)
 
 ### Import FOLD
 
@@ -52,16 +52,27 @@ You can save your drawing in SVG format.
 
 There is a small set of pre-made linkages to experiment with, such as the [Peaucellier–Lipkin Linkage](https://en.wikipedia.org/wiki/Peaucellier%E2%80%93Lipkin_linkage) and [Jansen's Linkage](https://en.wikipedia.org/wiki/Jansen%27s_linkage). If you designed an interesting linkage, [contact me](mailto:eyalp@mit.edu) and I will add it! (alternatively, submit a Pull Request)
 
-
-## Libraries Used
-
-* **Box2dWeb-2.1.a.3.js**, **Box2dWeb-2.1.a.3.min.js** - [Box2dWeb](https://code.google.com/p/box2dweb/) physics library as a more stable but less precise physics engine alternative for the linkage simulator.
-* **numeric-1.2.3.js**, **numeric-1.2.3.min.js** - [Numeric Javascript](http://numericjs.com/) library for matrix functions.
-* **webgl-utils.js** - Google webgl utils for regularly updating animation frames.
-* **fold.js** - [FOLD](https://github.com/edemaine/fold) for import/export to FOLD format.
-* **canvas2svg.js** - [Canvas2Svg](https://github.com/gliffy/canvas2svg) for export to SVG
+![Strandbeest](images/strandbeest.png)
 
 
-### License ###
+## TODOs:
 
-This content is released under the [MIT License](https://en.wikipedia.org/wiki/MIT_License).
+- User Interface:
+  - Mac Support
+  - In addition to keyboard shortcut, add an intuitive UI tht wllows to select points/edges and change their type or delete them
+  - Instead of placing points, define edge lengths
+  - Snap to Grid
+- Linkages:
+  - Gluing Kempe Linkages: click on two edges and add an angle gadget (multiplcator/translator) for that angle
+  - Design Linkages to draw all letters of the English alphabet
+- Move points in a uniform circular motion around another point (WIP in branch "zund")
+- Draw arbitrary curves using Fourier series terms
+
+## Acknowledgements
+
+- Yanping Chen, Laura Hallock, Eric Söderström, Xinyi Zhang for their original implementation.
+- Amanda Ghassaei for the UI and theme behind [OrigamiSimulator](https://origamisimulator.org/) and the inspiration to develop beautiful tools for better understanding of folding
+- Prof. Erik Demaine, Martin Demaine, Klara Mundilova, Yevhenii Diomidov, Erik Strand and all students of 6.849 for inspiration and support.
+
+
+  - 
