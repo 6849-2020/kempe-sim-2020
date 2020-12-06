@@ -33,7 +33,7 @@ var bodies;
 var joints;
 var mousejoint = null;
 var BOX2DPHYSICS = false;
-var equationCurve;
+var BOX_STEP = 1 / 60;
 var accuraterender = true;
 var fakecolor = {};
 var terms;
@@ -236,7 +236,6 @@ function createPhysicsWorld(globals) {
             bodies[data.edges[i][1]].GetWorldCenter());
         distJointDef.frequencyHz = 0;
         distJointDef.dampingRatio = 1;
-        console.log(distJointDef);
         j = world.CreateJoint(distJointDef);
         joints.push(j);
     }
@@ -662,49 +661,70 @@ function figureAngles(a, b) {
     else angleb += diff2-Math.PI*2;
 }
 
+function updateVelocity(i, hasVelocity) {
+  var b2Vec2 = Box2D.Common.Math.b2Vec2;
+
+  if (hasVelocity[i]) {
+    return;
+  }
+
+  if (data.pointsRotors && data.pointsRotors[i]) {
+    var pos = bodies[i].GetPosition();
+
+    // check if the pivot has its velocity calclated.
+    // if not, recursively calculate it
+    if (!hasVelocity[data.pointsRotors[i].fixedTo]) {
+      updateVelocity(data.pointsRotors[i].fixedTo, hasVelocity);
+    }
+
+    // based on https://rotatingcanvas.com/move-box2d-body-in-circular-path-in-libgdx/
+    var velocity=data.pointsRotors[i].frequency;
+
+    var pivot = bodies[data.pointsRotors[i].fixedTo].GetPosition();
+    var bodyDirection = new b2Vec2(pos.x, pos.y); // substract from ficture point
+    bodyDirection.Subtract(pivot);
+    bodyDirection.Normalize();
+
+    //to get velocity direction in clockwise motion with respect
+    // to pivot we  need to rotate above direction vector by 90
+    // degrees in anti clockwise  direction
+    var bodyVelocity = new b2Vec2( bodyDirection.y * velocity, -bodyDirection.x * velocity);
+    var tmp = new b2Vec2(pos.x, pos.y);
+    tmp.Subtract(pivot);
+    var distance = tmp.Length();
+    //Convert radius to box dimensions and get the difference
+    var delta=distance - data.pointsRotors[i].radius; //-ConvertToBoxCoordinate(radius);
+    //Here we multiply by -1 to get centripetal direction
+    //Then we divide by BOX_STEP which is equal to frame delta time
+
+    var centripetlVelocity=new b2Vec2( bodyDirection.x,  bodyDirection.y);
+    centripetlVelocity.Multiply(-1 * delta / BOX_STEP);
+
+    var rotatingVelocity=new b2Vec2(0, 0);
+    //Add fixed velocity tangent to the circular motion
+    rotatingVelocity.Add( bodyVelocity );
+    //Add centripetal velocity
+    rotatingVelocity.Add(centripetlVelocity);
+    //Add pivot body's velocity to move rotating body along with the center
+    rotatingVelocity.Add(bodies[data.pointsRotors[i].fixedTo].GetLinearVelocity());
+
+    bodies[i].SetLinearVelocity(rotatingVelocity);
+  }
+  hasVelocity[i] = true;
+}
+
 function update() {
     if (!edit_mode) {
         t += 0.1;
         if (BOX2DPHYSICS) {
-            var BOX_STEP = 1 / 60;
             var b2Vec2 = Box2D.Common.Math.b2Vec2;
+            var hasVelocity = {};
             for (var i=0; i<bodies.length; i++) {
                 var pos = bodies[i].GetPosition();
                 data.points[i][0] = pos.x;
                 data.points[i][1] = pos.y;
-                // console.log(pos);
-                if (data.pointsRotors && data.pointsRotors[i]) {
-                  // based on https://rotatingcanvas.com/move-box2d-body-in-circular-path-in-libgdx/
-                  var velocity=data.pointsRotors[i].frequency;
 
-                  var pivot = bodies[data.pointsRotors[i].fixedTo].GetPosition();
-                  var bodyDirection = new b2Vec2(pos.x, pos.y); // substract from ficture point
-                  bodyDirection.Subtract(pivot);
-                  bodyDirection.Normalize();
-
-                  //to get velocity direction in clockwise motion with respect
-                  // to pivot we  need to rotate above direction vector by 90
-                  // degrees in anti clockwise  direction
-                  var bodyVelocity = new b2Vec2( bodyDirection.y * velocity, -bodyDirection.x * velocity);
-                  var tmp = new b2Vec2(pos.x, pos.y);
-                  tmp.Subtract(pivot);
-                  var distance = tmp.Length();
-                  //Convert radius to box dimensions and get the difference
-                  var delta=distance - data.pointsRotors[i].radius; //-ConvertToBoxCoordinate(radius);
-                  //Here we multiply by -1 to get centripetal direction
-                  //Then we divide by BOX_STEP which is equal to frame delta time
-
-                  var centripetlVelocity=new b2Vec2( bodyDirection.x,  bodyDirection.y);
-                  centripetlVelocity.Multiply(-1 * delta / BOX_STEP);
-
-                  var rotatingVelocity=new b2Vec2(0, 0);
-                  //Add fixed velocity tangent to the circular motion
-                  rotatingVelocity.Add( bodyVelocity );
-                  //Add centripetal velocity
-                  rotatingVelocity.Add(centripetlVelocity);
-
-                  bodies[i].SetLinearVelocity(rotatingVelocity);
-                }
+                updateVelocity(i, hasVelocity);
             }
             world.Step(BOX_STEP, 10, 10);
             world.ClearForces();
@@ -819,8 +839,11 @@ function handleMouseHover(e) {
                 if ((Math.abs(data.points[i][0]-mx) <= RADIUS/2.0/sx) && (Math.abs(data.points[i][1]-my) <= RADIUS/2.0/Math.abs(sy)))
                 {
                     highlight = i+1;
-                    console.log("Highlighed: ", i, "to set the frequency, type:");
-                    console.log("setFrequency(" + i + ", FREQUENCY)");
+                    if (data.pointsRotors[i]) {
+                      console.log("Highlighed: ", i, "to set the frequency, type:");
+                      console.log("setFrequency(" + i + ", " + data.pointsRotors[i].frequency + ")");
+                    }
+
                     lastpos[0] = mx;
                     lastpos[1] = my;
                     break;
@@ -1211,7 +1234,7 @@ function handleKeyUp(event) {
 }
 
 function handleKeyPress(event) {
-  console.log(bodies);
+
 }
 
 var lastTime = 0;
