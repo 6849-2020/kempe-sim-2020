@@ -284,6 +284,13 @@ function initProcessLinesAndPoints(globals) {
             data.points[i].push(0);
     }
 
+    for (var r in data.pointsRotors) {
+      var p1 = data.points[r];
+      var p2 = data.points[data.pointsRotors[r].fixedTo];
+      var radius = Math.sqrt(Math.pow(p1[0]-p2[0], 2) + Math.pow(p1[1]-p2[1], 2));
+      data.pointsRotors[r].radius = radius;
+    }
+
     if (BOX2DPHYSICS) {
         createPhysicsWorld(globals);
     }
@@ -666,7 +673,7 @@ function update() {
                 data.points[i][0] = pos.x;
                 data.points[i][1] = pos.y;
                 // console.log(pos);
-                if (data.pointsRotors && data.pointsRotors[i].hasRotor) {
+                if (data.pointsRotors && data.pointsRotors[i]) {
                   // based on https://rotatingcanvas.com/move-box2d-body-in-circular-path-in-libgdx/
                   var velocity=data.pointsRotors[i].frequency;
 
@@ -789,6 +796,12 @@ function handleMouseClick(e) {
     }
 }
 
+function setFrequency(i, freq) {
+  data.pointsRotors[i].frequency = freq;
+  return;
+  //globals.resetData.pointsRotors[i].frequency = freq;
+}
+
 function handleMouseHover(e) {
     var mx = (e.offsetX-cx)/sx;
     var my = (e.offsetY-cy)/sy;
@@ -806,6 +819,8 @@ function handleMouseHover(e) {
                 if ((Math.abs(data.points[i][0]-mx) <= RADIUS/2.0/sx) && (Math.abs(data.points[i][1]-my) <= RADIUS/2.0/Math.abs(sy)))
                 {
                     highlight = i+1;
+                    console.log("Highlighed: ", i, "to set the frequency, type:");
+                    console.log("setFrequency(" + i + ", FREQUENCY)");
                     lastpos[0] = mx;
                     lastpos[1] = my;
                     break;
