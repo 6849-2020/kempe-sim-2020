@@ -39,11 +39,21 @@
                       <span aria-hidden="true">&times;</span>
                     </button>
                     <p>
-                    <b>Linkage Simulator</b><br/>
-                        This app allows you to construct rigid linkages that draw interesting patterns.<br /><br />
+                    <b>Kempe Simulator</b><br/>
+                        This app allows you to construct rigid linkages that draw interesting patterns.
+
+                        <img src="images/drawing1.png" /><br />
 
                         Heavily based on <b>A Practical Implementation of Kempe’s Universality Theorem</b>,
-                        a 6.849-2012 final project by Yanping Chen, Laura Hallock, Eric Söderström, Xinyi Zhang.
+                        a 6.849-2012 final project by Yanping Chen, Laura Hallock, Eric Söderström, Xinyi Zhang.<br /><br/>
+
+                        First, construct a linkage OR import a FOLD format OR load one of the pre-made linkage designs.
+                        Every linkage consists of vertices and edges. Each vertex can be Fixed, Free or Pen. Edges can be Free or Pen.
+                        Pen vertices and edges draw traces as they move. Drag a vertex to move it and the linkage its connected to.
+                        <br /><br />
+                        There are two physics engines. Box2D allows for fast yet inaccurate endering. C.H.S.Z. is slow but accurate.
+                        Play around with undamped motion mode in Box2D and pen edges to get patterns such as:
+                        <img src="images/edges1.png" />
                     </p>
                 </div>
             </div><!-- /.modal-content -->
