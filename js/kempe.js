@@ -665,6 +665,8 @@ function update() {
                 var i = 0;
                 for (i=0; i<data.points.length; i++)
                     if (data.points[i][2] != 'X') break;
+                if (i == data.points.length)
+                    return;
                 var forces = evalForces3(data, i, 0, 0);
                 // RK4step(data, forces, 0.1);
                 timeStep(data, forces, 0.1);
